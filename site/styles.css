@@ -79,6 +79,8 @@ input { min-width: 0; width: 100%; border: 0; outline: 0; padding: 15px 16px; ba
 .obs-preview strong { font: 800 34px DM Mono, monospace; letter-spacing: -.06em; }
 .copy-field input { color: #9ca7b6; font: 12px DM Mono, monospace; }
 .copy-field button { align-self: stretch; border: 0; border-left: 1px solid #344154; padding: 0 15px; background: #18202b; color: var(--cyan); }
+.obs-panel .copy-field + .microcopy { margin: 8px 0 18px; }
+.obs-panel .secret-warning { color: #ff9b88; }
 .rules-section { margin-top: 64px; }
 .section-heading { margin-bottom: 22px; }
 .section-heading h2, .limits-panel h2 { font-size: clamp(30px, 4vw, 48px); }

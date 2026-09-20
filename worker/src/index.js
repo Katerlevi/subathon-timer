@@ -235,8 +235,11 @@ async function getOverlayState(key, env) {
 async function authenticate(request, env) {
   const match = request.headers.get("authorization")?.match(/^Bearer ([A-Za-z0-9_-]{30,})$/);
   if (!match) throw httpError(401, "Anmeldung erforderlich.");
-  const row = await env.DB.prepare(`SELECT s.*,se.expires_at AS session_expires_at FROM sessions se JOIN streamers s ON s.id=se.streamer_id WHERE se.token_hash=? AND se.expires_at>? AND s.active=1`).bind(await sha256(match[1]), epoch()).first();
+  const tokenHash = await sha256(match[1]);
+  const now = epoch();
+  const row = await env.DB.prepare(`SELECT s.*,se.expires_at AS session_expires_at FROM sessions se JOIN streamers s ON s.id=se.streamer_id WHERE se.token_hash=? AND se.expires_at>? AND s.active=1`).bind(tokenHash, now).first();
   if (!row) throw httpError(401, "Sitzung abgelaufen.");
+  await env.DB.prepare("UPDATE sessions SET expires_at=? WHERE token_hash=?").bind(now + SESSION_LIFETIME, tokenHash).run();
   return row;
 }
 

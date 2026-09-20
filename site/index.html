@@ -6,6 +6,7 @@
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#090b10" />
     <meta name="referrer" content="no-referrer" />
+    <meta name="robots" content="noindex, nofollow, noarchive" />
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src https: http://127.0.0.1:*; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; object-src 'none'; base-uri 'none'" />
     <meta name="description" content="Sicherer Twitch Subathon Timer mit automatischen Events und OBS-Browserquelle." />
     <title>Subathon Timer</title>
@@ -78,17 +79,23 @@
           </section>
 
           <section class="obs-panel panel">
-            <div class="panel-heading"><span>OBS-BROWSERQUELLE</span><span class="secure-chip">NUR LESEN</span></div>
+            <div class="panel-heading"><span>PERSÖNLICHE LINKS</span><span class="secure-chip">GEHEIM</span></div>
             <div class="obs-preview" aria-hidden="true">
               <span>SUBATHON</span>
               <strong id="miniTimer">00:00:00</strong>
             </div>
-            <label for="overlayUrl">Persönliche URL</label>
+            <label for="dashboardUrl">Dashboard-Link · volle Steuerung</label>
+            <div class="copy-field">
+              <input id="dashboardUrl" readonly />
+              <button id="copyDashboardButton" type="button">Kopieren</button>
+            </div>
+            <p class="microcopy secret-warning">Wer diesen Link kennt, kann deinen Timer steuern. Er bleibt bei regelmäßiger Nutzung aktiv und wird durch „Verbindung trennen“ sofort ungültig.</p>
+            <label for="overlayUrl">OBS-Link · nur lesen</label>
             <div class="copy-field">
               <input id="overlayUrl" readonly />
               <button id="copyOverlayButton" type="button">Kopieren</button>
             </div>
-            <p class="microcopy">In OBS als Browserquelle mit 1920 × 220 px einfügen. Teile diese URL nicht öffentlich.</p>
+            <p class="microcopy">In OBS als Browserquelle mit 1920 × 220 px einfügen. Dieser Link kann den Timer nicht steuern.</p>
           </section>
         </div>
 

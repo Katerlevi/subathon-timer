@@ -4,12 +4,11 @@ compatibility_date = "2026-09-01"
 
 [vars]
 PUBLIC_API_ORIGIN = "https://DEIN-WORKER.workers.dev"
-FRONTEND_ORIGIN = "https://DEIN-NAME.github.io"
-FRONTEND_PATH = "/subathon-timer/"
+FRONTEND_ORIGIN = "https://royalfamily.gg"
+FRONTEND_PATH = "/subathon/"
 
 [[d1_databases]]
 binding = "DB"
 database_name = "subathon-timer-db"
 database_id = "00000000-0000-0000-0000-000000000000"
 migrations_dir = "migrations"
-

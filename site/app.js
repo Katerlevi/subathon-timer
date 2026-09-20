@@ -107,7 +107,9 @@ async function loadDashboard() {
   $("#connectionBadge").innerHTML = "<span></span>Twitch verbunden";
   $("#displayName").textContent = data.streamer.displayName;
   $("#lastEvent").textContent = data.timer.lastEvent || "Noch kein Event empfangen";
-  $("#overlayUrl").value = `${location.origin}${location.pathname.replace(/[^/]*$/, "")}overlay.html?api=${encodeURIComponent(apiBase)}&key=${encodeURIComponent(data.overlayKey)}`;
+  const appBase = `${location.origin}${location.pathname.replace(/[^/]*$/, "")}`;
+  $("#dashboardUrl").value = `${appBase}#session=${encodeURIComponent(state.session)}`;
+  $("#overlayUrl").value = `${appBase}overlay.html?api=${encodeURIComponent(apiBase)}&key=${encodeURIComponent(data.overlayKey)}`;
   renderRules(data.config);
   const form = $("#settingsForm");
   form.elements.startHours.value = data.config.startSeconds / 3600;
@@ -171,10 +173,14 @@ document.querySelectorAll("[data-adjust]").forEach((button) => button.addEventLi
   } catch { showToast("Timer konnte nicht angepasst werden"); }
 }));
 
-$("#copyOverlayButton").addEventListener("click", async () => {
-  try { await navigator.clipboard.writeText($("#overlayUrl").value); showToast("OBS-URL kopiert"); }
-  catch { $("#overlayUrl").select(); showToast("URL markiert – bitte kopieren"); }
-});
+async function copySecret(inputSelector, successMessage) {
+  const input = $(inputSelector);
+  try { await navigator.clipboard.writeText(input.value); showToast(successMessage); }
+  catch { input.select(); showToast("URL markiert – bitte kopieren"); }
+}
+
+$("#copyDashboardButton").addEventListener("click", () => copySecret("#dashboardUrl", "Dashboard-Link kopiert"));
+$("#copyOverlayButton").addEventListener("click", () => copySecret("#overlayUrl", "OBS-Link kopiert"));
 
 $("#disconnectButton").addEventListener("click", async () => {
   if (!confirm("Twitch-Verbindung und gespeicherte Tokens entfernen?")) return;

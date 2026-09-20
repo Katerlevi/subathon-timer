@@ -1,0 +1,5 @@
+TWITCH_CLIENT_ID=replace-me
+TWITCH_CLIENT_SECRET=replace-me
+EVENTSUB_SECRET=replace-with-32-or-more-random-characters
+ENCRYPTION_KEY=replace-with-base64-encoded-32-byte-key
+

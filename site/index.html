@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#090b10" />
+    <meta name="referrer" content="no-referrer" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src https: http://127.0.0.1:*; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; object-src 'none'; base-uri 'none'" />
+    <meta name="description" content="Sicherer Twitch Subathon Timer mit automatischen Events und OBS-Browserquelle." />
+    <title>Subathon Timer</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="config.js"></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <div class="noise" aria-hidden="true"></div>
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="Subathon Timer Startseite">
+        <span class="brand-mark" aria-hidden="true"><i></i></span>
+        <span>SUBATHON<span class="brand-soft">/TIMER</span></span>
+      </a>
+      <div class="connection" id="connectionBadge"><span></span>Nicht verbunden</div>
+    </header>
+
+    <main>
+      <section class="connect-view" id="connectView">
+        <div class="connect-copy">
+          <p class="eyebrow">LIVE-TIMER FUER TWITCH</p>
+          <h1>Mehr Support.<br /><em>Mehr Stream.</em></h1>
+          <p class="intro">Verbinde deinen Kanal, lege die Zeit pro Aktion fest und fuege die persoenliche Browserquelle zu OBS hinzu.</p>
+          <ul class="trust-list" aria-label="Sicherheitsmerkmale">
+            <li><span>01</span>Twitch-Ereignisse automatisch</li>
+            <li><span>02</span>OBS-Link ohne Schreibrechte</li>
+            <li><span>03</span>Secrets nur auf dem Server</li>
+          </ul>
+        </div>
+        <form class="connect-card" id="connectForm">
+          <div class="card-kicker"><span></span>KANAL VERBINDEN</div>
+          <label for="channelName">Twitch-Kanalname</label>
+          <div class="channel-input">
+            <span aria-hidden="true">twitch.tv/</span>
+            <input id="channelName" name="channel" autocomplete="off" inputmode="text" minlength="3" maxlength="25" pattern="[A-Za-z0-9_]+" placeholder="deinkanal" required />
+          </div>
+          <button class="primary-button" type="submit">Mit Twitch verbinden <span aria-hidden="true">↗</span></button>
+          <p class="microcopy">Du wirst zur offiziellen Twitch-Freigabe weitergeleitet. Wir fragen nur die Rechte ab, die fuer die ausgewaehlten Events notwendig sind.</p>
+          <p class="form-error" id="connectError" role="alert"></p>
+        </form>
+      </section>
+
+      <section class="dashboard" id="dashboard" hidden>
+        <div class="dashboard-head">
+          <div>
+            <p class="eyebrow">CONTROL ROOM</p>
+            <h1>Hallo, <span id="displayName">Streamer</span>.</h1>
+          </div>
+          <button class="ghost-button" id="disconnectButton" type="button">Verbindung trennen</button>
+        </div>
+
+        <div class="control-grid">
+          <section class="timer-panel panel">
+            <div class="panel-heading">
+              <span>LIVE-TIMER</span>
+              <span class="live-chip" id="timerStatus"><i></i>PAUSIERT</span>
+            </div>
+            <output class="timer-display" id="timerDisplay">00:00:00</output>
+            <p class="last-event" id="lastEvent">Noch kein Event empfangen</p>
+            <div class="timer-actions">
+              <button class="primary-button" id="startPauseButton" type="button">Timer starten</button>
+              <button class="secondary-button" id="resetButton" type="button">Zuruecksetzen</button>
+            </div>
+            <div class="quick-adjust" aria-label="Timer manuell anpassen">
+              <button type="button" data-adjust="-60">− 1 Min</button>
+              <button type="button" data-adjust="60">+ 1 Min</button>
+              <button type="button" data-adjust="600">+ 10 Min</button>
+            </div>
+          </section>
+
+          <section class="obs-panel panel">
+            <div class="panel-heading"><span>OBS-BROWSERQUELLE</span><span class="secure-chip">NUR LESEN</span></div>
+            <div class="obs-preview" aria-hidden="true">
+              <span>SUBATHON</span>
+              <strong id="miniTimer">00:00:00</strong>
+            </div>
+            <label for="overlayUrl">Persoenliche URL</label>
+            <div class="copy-field">
+              <input id="overlayUrl" readonly />
+              <button id="copyOverlayButton" type="button">Kopieren</button>
+            </div>
+            <p class="microcopy">In OBS als Browserquelle mit 1920 × 220 px einfuegen. Teile diese URL nicht oeffentlich.</p>
+          </section>
+        </div>
+
+        <form id="settingsForm">
+          <section class="rules-section">
+            <div class="section-heading">
+              <div><p class="eyebrow">AUTOMATISCHE REGELN</p><h2>Was verlaengert den Stream?</h2></div>
+              <button class="primary-button compact" type="submit">Aenderungen speichern</button>
+            </div>
+            <div class="rules-grid" id="rulesGrid"></div>
+          </section>
+
+          <section class="limits-panel panel">
+            <div><p class="eyebrow">ZEITRAHMEN</p><h2>Start und Limit</h2></div>
+            <div class="limit-inputs">
+              <label>Startzeit <span><input name="startHours" type="number" min="0" max="720" step="0.5" required /> Stunden</span></label>
+              <label>Maximale Zeit <span><input name="maxHours" type="number" min="1" max="720" step="0.5" required /> Stunden</span></label>
+            </div>
+          </section>
+        </form>
+      </section>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <noscript>Diese Anwendung benoetigt JavaScript.</noscript>
+  </body>
+</html>

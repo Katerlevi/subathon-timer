@@ -77,12 +77,12 @@ async function finishAuth(url, env, ctx) {
   if (!validationResponse.ok) return authError(env, "Twitch-Token konnte nicht validiert werden.");
   const validation = await validationResponse.json();
   const grantedScopes = new Set(validation.scopes || token.scope || []);
-  if (TWITCH_SCOPES.some((scope) => !grantedScopes.has(scope))) return authError(env, "Nicht alle benoetigten Twitch-Rechte wurden freigegeben.");
+  if (TWITCH_SCOPES.some((scope) => !grantedScopes.has(scope))) return authError(env, "Nicht alle benötigten Twitch-Rechte wurden freigegeben.");
 
   const userResponse = await fetch("https://api.twitch.tv/helix/users", { headers: { Authorization: `Bearer ${token.access_token}`, "Client-Id": env.TWITCH_CLIENT_ID } });
   const userPayload = await userResponse.json();
   const user = userPayload.data?.[0];
-  if (!user || user.login.toLowerCase() !== String(stored.expected_login).toLowerCase()) return authError(env, "Der freigegebene Twitch-Kanal stimmt nicht mit der Eingabe ueberein.");
+  if (!user || user.login.toLowerCase() !== String(stored.expected_login).toLowerCase()) return authError(env, "Der freigegebene Twitch-Kanal stimmt nicht mit der Eingabe überein.");
 
   const now = epoch();
   let streamer = await env.DB.prepare("SELECT id, encrypted_overlay_key FROM streamers WHERE twitch_user_id = ?").bind(user.id).first();
@@ -353,8 +353,8 @@ function toBase64Url(bytes) { return toBase64(bytes).replace(/\+/g, "-").replace
 function epoch() { return Math.floor(Date.now() / 1000); }
 
 async function readJson(request) {
-  if (Number(request.headers.get("content-length") || 0) > 20000) throw httpError(413, "Anfrage zu gross.");
-  try { return await request.json(); } catch { throw httpError(400, "Ungueltige JSON-Anfrage."); }
+  if (Number(request.headers.get("content-length") || 0) > 20000) throw httpError(413, "Anfrage zu groß.");
+  try { return await request.json(); } catch { throw httpError(400, "Ungültige JSON-Anfrage."); }
 }
 
 function authError(env, message) {

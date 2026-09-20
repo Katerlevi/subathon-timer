@@ -10,7 +10,7 @@ const rules = [
   { key: "bits", icon: "B", title: "100 Bits", detail: "Je vollem 100er-Schritt", color: "#ffd05c", defaultMinutes: 1 },
   { key: "follow", icon: "F", title: "Follow", detail: "Neuer Kanal-Follow", color: "#5ee6c4", defaultMinutes: 0 },
   { key: "raid", icon: "R", title: "Raid-Zuschauer", detail: "Pro Raid-Zuschauer", color: "#ff835c", defaultMinutes: 0.1 },
-  { key: "reward", icon: "CP", title: "Channel Points", detail: "Je Reward-Einloesung", color: "#7795ff", defaultMinutes: 2 },
+  { key: "reward", icon: "CP", title: "Channel Points", detail: "Je Reward-Einlösung", color: "#7795ff", defaultMinutes: 2 },
 ];
 
 const $ = (selector) => document.querySelector(selector);
@@ -60,7 +60,7 @@ function renderRules(config = {}) {
     return `<article class="rule-card" style="--rule-color:${rule.color}">
       <header><span class="rule-icon">${rule.icon}</span><label class="switch" aria-label="${escapeHtml(rule.title)} aktiv"><input name="${rule.key}Enabled" type="checkbox" ${enabled ? "checked" : ""}><span></span></label></header>
       <h3>${escapeHtml(rule.title)}</h3><p>${escapeHtml(rule.detail)}</p>
-      <label class="minute-field"><input name="${rule.key}Minutes" type="number" min="0" max="720" step="0.1" value="${seconds / 60}" aria-label="Minuten fuer ${escapeHtml(rule.title)}"><span>Minuten</span></label>
+      <label class="minute-field"><input name="${rule.key}Minutes" type="number" min="0" max="720" step="0.1" value="${seconds / 60}" aria-label="Minuten für ${escapeHtml(rule.title)}"><span>Minuten</span></label>
     </article>`;
   }).join("");
 }
@@ -127,7 +127,7 @@ $("#connectForm").addEventListener("submit", (event) => {
     return;
   }
   if (!/^[a-z0-9_]{3,25}$/.test(channel)) {
-    error.textContent = "Bitte gib einen gueltigen Twitch-Kanalnamen ein.";
+    error.textContent = "Bitte gib einen gültigen Twitch-Kanalnamen ein.";
     return;
   }
   location.assign(`${apiBase}/api/auth/start?channel=${encodeURIComponent(channel)}`);
@@ -147,7 +147,7 @@ $("#settingsForm").addEventListener("submit", async (event) => {
   try {
     const data = await api("/api/config", { method: "PUT", body: JSON.stringify(payload) });
     state.config = data.config;
-    showToast("Aenderungen gespeichert");
+    showToast("Änderungen gespeichert");
   } catch (error) { showToast(error.message === "SESSION_EXPIRED" ? "Bitte Twitch neu verbinden" : "Speichern fehlgeschlagen"); }
 });
 
@@ -158,9 +158,9 @@ $("#startPauseButton").addEventListener("click", async () => {
 });
 
 $("#resetButton").addEventListener("click", async () => {
-  if (!confirm("Timer wirklich auf die Startzeit zuruecksetzen?")) return;
-  try { const data = await api("/api/timer/reset", { method: "POST" }); state.timer = data.timer; renderTimer(); showToast("Timer zurueckgesetzt"); }
-  catch { showToast("Zuruecksetzen fehlgeschlagen"); }
+  if (!confirm("Timer wirklich auf die Startzeit zurücksetzen?")) return;
+  try { const data = await api("/api/timer/reset", { method: "POST" }); state.timer = data.timer; renderTimer(); showToast("Timer zurückgesetzt"); }
+  catch { showToast("Zurücksetzen fehlgeschlagen"); }
 });
 
 document.querySelectorAll("[data-adjust]").forEach((button) => button.addEventListener("click", async () => {

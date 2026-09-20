@@ -26,7 +26,7 @@ async function refresh() {
     if (!response.ok) throw new Error("Overlay nicht gefunden");
     snapshot = await response.json();
     document.querySelector("#channel").textContent = snapshot.channel ? `${snapshot.channel.toUpperCase()} · SUBATHON` : "SUBATHON";
-    document.querySelector("#event").textContent = snapshot.lastEvent || (snapshot.running ? "Timer laeuft" : "Timer bereit");
+    document.querySelector("#event").textContent = snapshot.lastEvent || (snapshot.running ? "Timer läuft" : "Timer bereit");
     render();
   } catch { document.querySelector("#event").textContent = "Verbindung wird wiederhergestellt …"; }
 }
@@ -35,4 +35,3 @@ render();
 refresh();
 setInterval(render, 250);
 setInterval(refresh, 3000);
-

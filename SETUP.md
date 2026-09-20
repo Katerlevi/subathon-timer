@@ -6,7 +6,7 @@ In der Twitch Developer Console eine Anwendung registrieren. Als OAuth-Weiterlei
 
 `https://DEIN-WORKER.workers.dev/api/auth/callback`
 
-Client-ID und Client-Secret werden spaeter ausschliesslich als Worker-Secrets hinterlegt.
+Client-ID und Client-Secret werden später ausschließlich als Worker-Secrets hinterlegt.
 
 ## 2. Cloudflare Worker und D1
 
@@ -28,29 +28,28 @@ pnpm exec wrangler secret put ENCRYPTION_KEY
 pnpm exec wrangler deploy
 ```
 
-`EVENTSUB_SECRET` muss ein kryptografisch zufaelliger ASCII-Wert mit 10 bis 100 Zeichen sein. `ENCRYPTION_KEY` ist ein Base64-kodierter 32-Byte-Schluessel.
+`EVENTSUB_SECRET` muss ein kryptografisch zufälliger ASCII-Wert mit 10 bis 100 Zeichen sein. `ENCRYPTION_KEY` ist ein Base64-kodierter 32-Byte-Schlüssel.
 
-In `wrangler.toml` muessen ausserdem diese oeffentlichen Werte stimmen:
+In `wrangler.toml` müssen außerdem diese öffentlichen Werte stimmen:
 
-- `PUBLIC_API_ORIGIN`: URL des Workers ohne abschliessenden Slash
+- `PUBLIC_API_ORIGIN`: URL des Workers ohne abschließenden Slash
 - `FRONTEND_ORIGIN`: finale GitHub-Pages-Origin, zum Beispiel `https://name.github.io`
 - `FRONTEND_PATH`: Repository-Pfad, zum Beispiel `/subathon-timer/`
 
 ## 3. GitHub Pages
 
-In `site/config.js` die Worker-URL eintragen. Das Repository zu GitHub pushen und unter **Settings > Pages > Source** `GitHub Actions` auswaehlen. Der Workflow `.github/workflows/pages.yml` veroeffentlicht den Ordner `site`.
+In `site/config.js` die Worker-URL eintragen. Das Repository zu GitHub pushen und unter **Settings > Pages > Source** `GitHub Actions` auswählen. Der Workflow `.github/workflows/pages.yml` veröffentlicht den Ordner `site`.
 
 ## 4. Twitch verbinden
 
-Die veroeffentlichte Seite oeffnen, Twitch-Kanalnamen eingeben und **Mit Twitch verbinden** waehlen. Nach erfolgreicher Freigabe erscheinen Dashboard und OBS-URL. In OBS eine Browserquelle mit 1920 x 220 Pixeln anlegen und diese URL einfuegen.
+Die veröffentlichte Seite öffnen, Twitch-Kanalnamen eingeben und **Mit Twitch verbinden** wählen. Nach erfolgreicher Freigabe erscheinen Dashboard und OBS-URL. In OBS eine Browserquelle mit 1920 x 220 Pixeln anlegen und diese URL einfügen.
 
 ## 5. Funktionstest
 
 Vor dem ersten echten Stream:
 
 1. Timer starten.
-2. Im Dashboard eine Minute manuell hinzufuegen.
-3. Pruefen, dass OBS innerhalb weniger Sekunden aktualisiert.
+2. Im Dashboard eine Minute manuell hinzufügen.
+3. Prüfen, dass OBS innerhalb weniger Sekunden aktualisiert.
 4. Mit der Twitch CLI oder einem Testkanal mindestens Sub-, Bits- und Follow-Ereignisse testen.
 5. Danach die echten Minutenwerte und das Zeitlimit festlegen.
-

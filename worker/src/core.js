@@ -41,7 +41,7 @@ export function validateConfig(input) {
     startSeconds: boundedInt(input.startSeconds, 0, 2592000),
     maxSeconds: boundedInt(input.maxSeconds, 3600, 2592000),
   };
-  if (result.maxSeconds < result.startSeconds) throw new Error("Das Zeitlimit muss mindestens so gross wie die Startzeit sein.");
+  if (result.maxSeconds < result.startSeconds) throw new Error("Das Zeitlimit muss mindestens so groß wie die Startzeit sein.");
   for (const key of RULE_KEYS) {
     result[`${key}Seconds`] = boundedInt(input[`${key}Seconds`], 0, 43200);
     result[`${key}Enabled`] = Boolean(input[`${key}Enabled`]);
@@ -51,7 +51,7 @@ export function validateConfig(input) {
 
 export function safeChannel(value) {
   const channel = String(value || "").trim().toLowerCase();
-  if (!/^[a-z0-9_]{3,25}$/.test(channel)) throw new Error("Ungueltiger Twitch-Kanalname.");
+  if (!/^[a-z0-9_]{3,25}$/.test(channel)) throw new Error("Ungültiger Twitch-Kanalname.");
   return channel;
 }
 
@@ -64,7 +64,6 @@ function tierKey(tier) { return tier === "3000" ? "tier3" : tier === "2000" ? "t
 function tierLabel(tier) { return tier === "3000" ? "Tier 3" : tier === "2000" ? "Tier 2" : "T1 / Prime"; }
 function boundedInt(value, min, max) {
   const number = Number(value);
-  if (!Number.isFinite(number)) throw new Error("Ungueltiger Zahlenwert.");
+  if (!Number.isFinite(number)) throw new Error("Ungültiger Zahlenwert.");
   return Math.min(max, Math.max(min, Math.round(number)));
 }
-

@@ -8,6 +8,7 @@ const session = "dashboard_test_token_1234567890123456789012";
 const overlayKey = "overlay_test_token_123456789012345678901234";
 const api = "/wp-json/royal-family-subathon/v1";
 const port = Number(process.env.RFS_MOCK_PORT || 4174);
+const eventStatus = process.env.RFS_MOCK_EVENT_STATUS === "pending" ? "webhook_callback_verification_pending" : "enabled";
 let timer = { running: false, remainingSeconds: 14400, endsAt: 0, lastEvent: null, sleeping: false, sleepStartedAt: 0, alertId: 0, alertLabel: null, alertSeconds: 0, alertCreatedAt: 0 };
 let sleepResumeTimer = false;
 let alerts = [];
@@ -52,7 +53,12 @@ createServer(async (request, response) => {
     if (request.headers.authorization !== `Bearer ${session}`) return json(response, 401, { message: "Sitzung abgelaufen." });
     if (url.pathname === `${api}/me`) return json(response, 200, { streamer: { login: "testkanal", displayName: "Testkanal", setupStatus: "ready" }, config, timer, overlayKey });
 		if (url.pathname === `${api}/events/refresh` && request.method === "POST") return json(response, 200, { ok: true, message: "Twitch-Ereignisse angefordert. Die Aktivierung kann kurz dauern." });
-		if (url.pathname === `${api}/events/status`) return json(response, 200, { custom: "enabled", automatic: "enabled" });
+		if (url.pathname === `${api}/events/status`) return json(response, 200, {
+			subscribe: eventStatus, resub: eventStatus, gift: eventStatus, cheer: eventStatus,
+			follow: eventStatus, raid: eventStatus, custom: eventStatus, automatic: eventStatus,
+			overall: eventStatus === "enabled" ? "enabled" : "pending",
+			activeCount: eventStatus === "enabled" ? 8 : 0, requiredCount: 8,
+		});
 		if (url.pathname === `${api}/timer/state`) return json(response, 200, { timer });
     if (url.pathname === `${api}/config` && request.method === "PUT") {
       config = await body(request);

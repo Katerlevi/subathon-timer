@@ -19,7 +19,7 @@ Ein sicherer, quelloffener Subathon-Timer für Twitch. Dashboard und OBS-Ansicht
 - Persönlicher Dashboard-Link mit Schreibrechten und getrennter OBS-Link mit reinen Leserechten
 - Geheime, schreibgeschützte OBS-Browserquellen-URL
 - Signaturprüfung, Replay-Schutz und Alert-Warteschlange für Twitch EventSub
-- Eigene und automatische Kanalpunkt-Belohnungen mit getrenntem EventSub-Abo; Status und erneute Anmeldung im Dashboard
+- Eigene und automatische Kanalpunkt-Belohnungen mit getrenntem EventSub-Abo; Status aller acht Twitch-Ereignisse und erneute Anmeldung im Dashboard
 - Verschlüsselte Twitch-Tokens in der WordPress-Datenbank
 - Responsive deutsche Bedienoberfläche
 

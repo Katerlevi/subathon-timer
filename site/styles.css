@@ -85,6 +85,8 @@ input { min-width: 0; width: 100%; border: 0; outline: 0; padding: 15px 16px; ba
 .event-health { margin-top:24px; padding-top:18px; border-top:1px solid var(--line); }
 .event-health .secondary-button { width:100%; }
 .event-health p { margin:10px 0 0; color:var(--muted); font-size:12px; line-height:1.55; }
+#eventStatus { color:#ffb36b; font-size:14px; font-weight:700; }
+#eventStatus.active { color:#bfffb3; }
 #settingsForm { display:flex; flex-direction:column; }
 .schedule-panel { order:1; }
 .limits-panel { order:2; }

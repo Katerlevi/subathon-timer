@@ -1,6 +1,6 @@
 const apiBase = String(window.SUBATHON_CONFIG?.apiBase || "").replace(/\/$/, "");
 const sessionKey = "subathon_session";
-const state = { session: sessionStorage.getItem(sessionKey), streamer: null, timer: null, config: null, tick: null, poll: null };
+const state = { session: sessionStorage.getItem(sessionKey), streamer: null, timer: null, config: null, tick: null, poll: null, eventPoll: null };
 
 const rules = [
   { key: "tier1", icon: "T1", title: "T1 / Prime Sub", detail: "Neue Subs und Resubs", color: "#7cff4f", defaultMinutes: 4 },
@@ -120,13 +120,27 @@ function applyTimer(timer) {
 	renderSleep();
 }
 
-async function checkChannelPoints() {
+function showEventHealth(label, active) {
+	const badge = $("#connectionBadge");
+	badge.classList.toggle("online", active);
+	badge.innerHTML = `<span></span>${label}`;
+}
+
+async function checkEventHealth() {
 	const status = $("#channelPointsStatus");
+	const summary = $("#eventStatus");
 	try {
 		const result = await api("/events/status");
 		const describe = (value) => value === "enabled" ? "aktiv" : value === "webhook_callback_verification_pending" ? "wartet auf Bestätigung" : value === "webhook_callback_verification_failed" ? "Bestätigung fehlgeschlagen" : value === "missing" ? "nicht aktiv" : `nicht aktiv (${value})`;
+		const active = result.overall === "enabled" && result.activeCount === result.requiredCount && result.requiredCount === 8;
+		showEventHealth(active ? "Twitch-Ereignisse aktiv" : result.overall === "pending" ? "Twitch-Bestätigung ausstehend" : "Twitch-Ereignisse nicht aktiv", active);
+		summary.classList.toggle("active", active);
+		summary.textContent = active ? "Twitch hat alle 8 Ereignisse bestätigt. Prüfe zusätzlich eine echte Aktion auf deinem Kanal." : `${Number(result.activeCount) || 0} von 8 Twitch-Ereignissen aktiv. Echte Aktionen werden möglicherweise nicht verarbeitet.`;
 		status.textContent = `Kanalpunkte: eigene Belohnungen ${describe(result.custom)}, automatische Belohnungen ${describe(result.automatic)}.`;
 	} catch {
+		showEventHealth("Twitch-Status nicht prüfbar", false);
+		summary.classList.remove("active");
+		summary.textContent = "Der Twitch-Ereignisstatus ist momentan nicht prüfbar. Automatische Zeitgutschriften sind nicht bestätigt.";
 		status.textContent = "Kanalpunkte-Verbindung konnte gerade nicht geprüft werden.";
 	}
 }
@@ -185,9 +199,7 @@ async function loadDashboard() {
   state.timer = data.timer;
   connectView.hidden = true;
   dashboard.hidden = false;
-  $("#connectionBadge").classList.add("online");
-  const setupReady = data.streamer.setupStatus === "ready";
-  $("#connectionBadge").innerHTML = `<span></span>${setupReady ? "Twitch verbunden" : "Twitch-Verbindung prüfen"}`;
+  showEventHealth("Twitch-Ereignisse werden geprüft", false);
   $("#displayName").textContent = data.streamer.displayName;
   $("#lastEvent").textContent = data.timer.lastEvent || "Noch kein Event empfangen";
   const appBase = `${location.origin}${location.pathname.replace(/[^/]*$/, "")}`;
@@ -208,8 +220,9 @@ async function loadDashboard() {
 	renderSleep();
 	renderSchedule();
   renderMaximumTime();
-	checkChannelPoints();
-  if (!setupReady) showToast("Twitch-Events sind noch nicht vollständig aktiviert");
+	await checkEventHealth();
+	clearInterval(state.eventPoll);
+	state.eventPoll = setInterval(checkEventHealth, 60000);
   clearInterval(state.tick);
   state.tick = setInterval(renderTimer, 250);
 	clearInterval(state.poll);
@@ -311,9 +324,9 @@ $("#refreshEventsButton").addEventListener("click", async () => {
 	button.disabled = true;
 	try {
 		const result = await api("/events/refresh", { method: "POST" });
-		$("#connectionBadge").innerHTML = "<span></span>Twitch verbunden";
+		showEventHealth("Twitch-Bestätigung ausstehend", false);
 		showToast(result.message);
-		await checkChannelPoints();
+		await checkEventHealth();
 	} catch (error) {
 		showToast(error.message || "Twitch-Ereignisse konnten nicht aktualisiert werden");
 	} finally {

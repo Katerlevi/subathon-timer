@@ -140,12 +140,19 @@ final class RFS_Twitch {
 		}
 	}
 
-	public static function channel_points_status( string $broadcaster_id ): array {
-		$statuses = array( 'custom' => 'missing', 'automatic' => 'missing' );
+	public static function subscription_status( string $broadcaster_id ): array {
 		$types = array(
-			'channel.channel_points_custom_reward_redemption.add' => array( 'custom', '1' ),
-			'channel.channel_points_automatic_reward_redemption.add' => array( 'automatic', '2' ),
+			'channel.subscribe' => array( 'subscribe', '1', 'broadcaster_user_id' ),
+			'channel.subscription.message' => array( 'resub', '1', 'broadcaster_user_id' ),
+			'channel.subscription.gift' => array( 'gift', '1', 'broadcaster_user_id' ),
+			'channel.cheer' => array( 'cheer', '1', 'broadcaster_user_id' ),
+			'channel.follow' => array( 'follow', '2', 'broadcaster_user_id' ),
+			'channel.raid' => array( 'raid', '1', 'to_broadcaster_user_id' ),
+			'channel.channel_points_custom_reward_redemption.add' => array( 'custom', '1', 'broadcaster_user_id' ),
+			'channel.channel_points_automatic_reward_redemption.add' => array( 'automatic', '2', 'broadcaster_user_id' ),
 		);
+		$statuses = array_fill_keys( array_column( $types, 0 ), 'missing' );
+		$priority = array( 'missing' => 0, 'webhook_callback_verification_failed' => 1, 'webhook_callback_verification_pending' => 2, 'enabled' => 3 );
 		$token = self::app_token();
 		$cursor = '';
 		for ( $page = 0; $page < 10; $page++ ) {
@@ -156,12 +163,12 @@ final class RFS_Twitch {
 			$payload = self::request_json( $url, array( 'method' => 'GET', 'timeout' => 15, 'headers' => self::api_headers( $token ) ) );
 			foreach ( (array) ( $payload['data'] ?? array() ) as $subscription ) {
 				$type = (string) ( $subscription['type'] ?? '' );
-				if ( ! isset( $types[ $type ] ) || (string) ( $subscription['version'] ?? '' ) !== $types[ $type ][1] || (string) ( $subscription['condition']['broadcaster_user_id'] ?? '' ) !== $broadcaster_id || (string) ( $subscription['transport']['callback'] ?? '' ) !== self::webhook_url() ) {
+				if ( ! isset( $types[ $type ] ) || (string) ( $subscription['version'] ?? '' ) !== $types[ $type ][1] || (string) ( $subscription['condition'][ $types[ $type ][2] ] ?? '' ) !== $broadcaster_id || (string) ( $subscription['transport']['callback'] ?? '' ) !== self::webhook_url() ) {
 					continue;
 				}
 				$key = $types[ $type ][0];
 				$status = (string) ( $subscription['status'] ?? 'unknown' );
-				if ( 'enabled' === $status || 'enabled' !== $statuses[ $key ] ) {
+				if ( ( $priority[ $status ] ?? 1 ) > ( $priority[ $statuses[ $key ] ] ?? 0 ) ) {
 					$statuses[ $key ] = $status;
 				}
 			}
@@ -170,7 +177,11 @@ final class RFS_Twitch {
 				break;
 			}
 		}
-		return $statuses;
+		$values = array_values( $statuses );
+		$active_count = count( array_filter( $values, static function ( $status ) { return 'enabled' === $status; } ) );
+		$pending_count = count( array_filter( $values, static function ( $status ) { return 'webhook_callback_verification_pending' === $status; } ) );
+		$overall = count( $values ) === $active_count ? 'enabled' : ( count( $values ) === $active_count + $pending_count ? 'pending' : 'unavailable' );
+		return array_merge( $statuses, array( 'overall' => $overall, 'activeCount' => $active_count, 'requiredCount' => count( $values ) ) );
 	}
 
 	public static function revoke_token( string $access_token ): void {

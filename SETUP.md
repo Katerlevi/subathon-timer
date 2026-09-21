@@ -38,7 +38,9 @@ Vor dem ersten echten Stream:
 4. Beide Schlafvarianten testen: Countdown weiterlaufen/einfrieren sowie Support addieren/nicht addieren. Im Schlafmodus muss ein vollständiger erklärender Satz in der Browserquelle stehen; nach dem Aufwachen muss er verschwinden.
 5. Startdatum und Uhrzeit eintragen. Danach sowohl ein offenes Ende als auch ein festes spätestes Ende testen. Bei festem Ende darf kein Event den Timer über diese Uhrzeit hinaus verlängern.
 6. Die Social-Media-Regelgrafik erzeugen und inhaltlich prüfen.
-7. Im Dashboard prüfen, ob beide Kanalpunkte-Abos als aktiv angezeigt werden. Falls nicht, **Twitch-Ereignisse aktualisieren** wählen und nach kurzer Wartezeit neu laden. Eine eigene und eine automatische Kanalpunkt-Belohnung tatsächlich einlösen; erst das prüft die Twitch-Verbindung. Zusätzlich Sub-, Bits- und Follow-Ereignisse testen.
+7. Im Dashboard prüfen, ob **8 von 8 Twitch-Ereignissen aktiv** angezeigt werden und beide Kanalpunkte-Abos als aktiv erscheinen. Bei ausstehender oder fehlgeschlagener Webhook-Bestätigung ist die Anmeldung noch nicht erfolgreich, auch wenn der Twitch-Login geklappt hat. Erst nach Beseitigung des Zustellproblems **Twitch-Ereignisse aktualisieren** wählen und den Status erneut prüfen. Eine eigene und eine automatische Kanalpunkt-Belohnung tatsächlich einlösen; erst das prüft die Twitch-Verbindung Ende zu Ende. Zusätzlich Sub-, Bits- und Follow-Ereignisse testen.
 8. Danach die echten Minutenwerte, den Zeitplan und das Zeitlimit festlegen.
 
 Die Oberfläche allein beweist noch nicht, dass echte Twitch-Events ankommen. Das muss nach dem Eintragen der Twitch-Anwendung einmal live geprüft werden.
+
+Wenn Twitch-Abos bei `webhook_callback_verification_failed` bleiben, den öffentlichen Webhook `https://royalfamily.gg/wp-json/royal-family-subathon/v1/eventsub` in der Hosting-/WAF-Verwaltung auf Bot-Sperren, Rate-Limits und 5xx-Antworten prüfen. Nur diesen konkreten Webhook für Twitch-Zustellung freigeben; die Signaturprüfung im Plugin darf nicht deaktiviert werden. Ein erfolgreicher Test-Alert beweist lediglich die interne Timer-/OBS-Strecke und ersetzt diese Prüfung nicht.

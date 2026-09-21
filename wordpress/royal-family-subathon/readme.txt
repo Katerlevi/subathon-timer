@@ -2,7 +2,7 @@
 Contributors: royalfamily
 Requires at least: 6.0
 Requires PHP: 7.4
-Stable tag: 1.3.3
+Stable tag: 1.3.4
 License: Proprietary
 
 Sicherer Twitch-Subathon-Timer für die versteckte RoyalFamily.gg-Seite.
@@ -18,6 +18,8 @@ Version 1.3.1 ergänzt automatische Twitch-Kanalpunkt-Belohnungen und eine Schal
 Version 1.3.2 liefert die für die Twitch-Webhook-Bestätigung erforderliche Content-Length und zeigt einen fehlgeschlagenen Bestätigungsstatus ausdrücklich an.
 
 Version 1.3.3 zeigt WordPress-Administratoren den letzten Schritt der Twitch-Webhook-Bestätigung ohne Nachrichteninhalte oder Geheimnisse an.
+
+Version 1.3.4 meldet Twitch-Ereignisse erst dann als aktiv, wenn alle acht erforderlichen Webhook-Abos von Twitch bestätigt wurden.
 
 == Installation ==
 

@@ -268,7 +268,7 @@ final class RFS_REST {
 			$notice = '';
 			try {
 				RFS_Twitch::setup_subscriptions( (string) $user['id'] );
-				$wpdb->update( RFS_DB::table( 'streamers' ), array( 'setup_status' => 'ready', 'updated_at' => time() ), array( 'id' => $streamer_id ) );
+				$wpdb->update( RFS_DB::table( 'streamers' ), array( 'setup_status' => 'pending', 'updated_at' => time() ), array( 'id' => $streamer_id ) );
 			} catch ( Throwable $error ) {
 				$wpdb->update( RFS_DB::table( 'streamers' ), array( 'setup_status' => 'error', 'updated_at' => time() ), array( 'id' => $streamer_id ) );
 				$notice = 'Die Verbindung wurde gespeichert, aber Twitch-Events konnten noch nicht vollständig aktiviert werden.';
@@ -556,7 +556,7 @@ final class RFS_REST {
 		try {
 			RFS_Twitch::setup_subscriptions( (string) $streamer['twitch_user_id'] );
 			global $wpdb;
-			$wpdb->update( RFS_DB::table( 'streamers' ), array( 'setup_status' => 'ready', 'updated_at' => time() ), array( 'id' => (string) $streamer['id'] ) );
+			$wpdb->update( RFS_DB::table( 'streamers' ), array( 'setup_status' => 'pending', 'updated_at' => time() ), array( 'id' => (string) $streamer['id'] ) );
 			return self::response( array( 'ok' => true, 'message' => 'Twitch-Ereignisse angefordert. Die Aktivierung kann kurz dauern.' ) );
 		} catch ( Throwable $error ) {
 			global $wpdb;
@@ -568,7 +568,13 @@ final class RFS_REST {
 	public static function events_status( WP_REST_Request $request ) {
 		$streamer = (array) $request->get_param( '_rfs_auth' );
 		try {
-			return self::response( RFS_Twitch::channel_points_status( (string) $streamer['twitch_user_id'] ) );
+			$status = RFS_Twitch::subscription_status( (string) $streamer['twitch_user_id'] );
+			$setup_status = 'enabled' === $status['overall'] ? 'ready' : ( 'pending' === $status['overall'] ? 'pending' : 'error' );
+			if ( $setup_status !== (string) $streamer['setup_status'] ) {
+				global $wpdb;
+				$wpdb->update( RFS_DB::table( 'streamers' ), array( 'setup_status' => $setup_status, 'updated_at' => time() ), array( 'id' => (string) $streamer['id'] ) );
+			}
+			return self::response( $status );
 		} catch ( Throwable $error ) {
 			return self::error( 'eventsub_unavailable', 'Der Twitch-Ereignisstatus ist momentan nicht erreichbar.', 502 );
 		}

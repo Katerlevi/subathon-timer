@@ -377,6 +377,9 @@ final class RFS_REST {
 		$config = self::config_for( (string) $streamer['id'] );
 		$timer['sleepAdditionsEnabled'] = $config['sleepAdditionsEnabled'];
 		$timer['sleepTimerContinues'] = $config['sleepTimerContinues'];
+		$timer['streamStartAt'] = $config['streamStartAt'];
+		$timer['endMode'] = $config['endMode'];
+		$timer['streamEndAt'] = $config['streamEndAt'];
 		$after = max( 0, (int) $request->get_param( 'after' ) );
 		$alerts = $wpdb->get_results(
 			$wpdb->prepare(
@@ -415,15 +418,16 @@ final class RFS_REST {
 		$data = self::config_to_row( $config );
 		$data['updated_at'] = time();
 		$wpdb->update( RFS_DB::table( 'timer_configs' ), $data, array( 'streamer_id' => (string) $streamer['id'] ) );
-		self::cap_timer( (string) $streamer['id'], (int) $config['maxSeconds'] );
+		self::cap_timer( (string) $streamer['id'], $config );
 		return self::response( array( 'config' => $config ) );
 	}
 
-	public static function timer_action( WP_REST_Request $request ): WP_REST_Response {
+	public static function timer_action( WP_REST_Request $request ) {
 		$streamer = (array) $request->get_param( '_rfs_auth' );
 		$id       = (string) $streamer['id'];
 		$action   = (string) $request->get_param( 'action' );
 		$config   = self::config_for( $id );
+		$limit    = self::effective_timer_limit( $config );
 		global $wpdb;
 		self::raw_timer_for_update( $id );
 		$wpdb->query( 'START TRANSACTION' );
@@ -436,13 +440,13 @@ final class RFS_REST {
 			$now = time();
 			$current = RFS_Core::timer_from_row( (array) $row );
 			if ( 'start' === $action ) {
-				$remaining = min( (int) $config['maxSeconds'], (int) $current['remainingSeconds'] );
+				$remaining = min( $limit, (int) $current['remainingSeconds'] );
 				$data = array( 'running' => $remaining > 0 ? 1 : 0, 'remaining_seconds' => $remaining, 'ends_at' => $remaining > 0 ? $now + $remaining : 0, 'updated_at' => $now );
 			} elseif ( 'pause' === $action ) {
-				$remaining = min( (int) $config['maxSeconds'], (int) $current['remainingSeconds'] );
+				$remaining = min( $limit, (int) $current['remainingSeconds'] );
 				$data = array( 'running' => 0, 'remaining_seconds' => $remaining, 'ends_at' => 0, 'updated_at' => $now );
 			} else {
-				$data = array( 'running' => 0, 'remaining_seconds' => (int) $config['startSeconds'], 'ends_at' => 0, 'last_event' => null, 'alert_created_at' => 0, 'updated_at' => $now );
+				$data = array( 'running' => 0, 'remaining_seconds' => min( $limit, (int) $config['startSeconds'] ), 'ends_at' => 0, 'last_event' => null, 'alert_created_at' => 0, 'updated_at' => $now );
 			}
 			if ( false === $wpdb->update( RFS_DB::table( 'timer_states' ), $data, array( 'streamer_id' => $id ) ) ) {
 				throw new RuntimeException( 'Timer konnte nicht gespeichert werden.' );
@@ -519,10 +523,11 @@ final class RFS_REST {
 				}
 			} elseif ( 'end' === $action && ! empty( $row['sleeping'] ) ) {
 				$data = array( 'sleeping' => 0, 'sleep_started_at' => 0, 'sleep_resume_timer' => 0, 'updated_at' => $now );
-				if ( ! empty( $row['sleep_resume_timer'] ) && (int) $current['remainingSeconds'] > 0 ) {
+				$resume_seconds = min( self::effective_timer_limit( $config, $now ), (int) $current['remainingSeconds'] );
+				if ( ! empty( $row['sleep_resume_timer'] ) && $resume_seconds > 0 ) {
 					$data['running'] = 1;
-					$data['remaining_seconds'] = (int) $current['remainingSeconds'];
-					$data['ends_at'] = $now + (int) $current['remainingSeconds'];
+					$data['remaining_seconds'] = $resume_seconds;
+					$data['ends_at'] = $now + $resume_seconds;
 				}
 			} else {
 				$data = array( 'updated_at' => $now );
@@ -590,6 +595,9 @@ final class RFS_REST {
 		$config = array(
 			'startSeconds' => (int) ( $row['start_seconds'] ?? 14400 ),
 			'maxSeconds' => (int) ( $row['max_seconds'] ?? 259200 ),
+			'streamStartAt' => (int) ( $row['stream_start_at'] ?? 0 ),
+			'endMode' => 'fixed' === ( $row['end_mode'] ?? 'open' ) ? 'fixed' : 'open',
+			'streamEndAt' => (int) ( $row['stream_end_at'] ?? 0 ),
 			'sleepAdditionsEnabled' => ! isset( $row['sleep_additions_enabled'] ) || ! empty( $row['sleep_additions_enabled'] ),
 			'sleepTimerContinues' => ! isset( $row['sleep_timer_continues'] ) || ! empty( $row['sleep_timer_continues'] ),
 		);
@@ -604,6 +612,9 @@ final class RFS_REST {
 		$row = array(
 			'start_seconds' => (int) $config['startSeconds'],
 			'max_seconds' => (int) $config['maxSeconds'],
+			'stream_start_at' => (int) $config['streamStartAt'],
+			'end_mode' => (string) $config['endMode'],
+			'stream_end_at' => (int) $config['streamEndAt'],
 			'sleep_additions_enabled' => ! empty( $config['sleepAdditionsEnabled'] ) ? 1 : 0,
 			'sleep_timer_continues' => ! empty( $config['sleepTimerContinues'] ) ? 1 : 0,
 		);
@@ -652,7 +663,11 @@ final class RFS_REST {
 			}
 			$now       = time();
 			$current   = RFS_Core::timer_from_row( (array) $row );
-			$remaining = min( (int) $config['maxSeconds'], max( 0, (int) $current['remainingSeconds'] + $seconds ) );
+			$remaining = min( self::effective_timer_limit( $config, $now ), max( 0, (int) $current['remainingSeconds'] + $seconds ) );
+			$actual_added = max( 0, $remaining - (int) $current['remainingSeconds'] );
+			if ( $show_alert && $seconds > 0 && $actual_added < $seconds ) {
+				$label .= ' · bis zum Zeitlimit';
+			}
 			$running   = ! empty( $current['running'] ) && $remaining > 0;
 			$data      = array(
 				'running' => $running ? 1 : 0,
@@ -664,7 +679,7 @@ final class RFS_REST {
 			if ( $show_alert ) {
 				$data['alert_id'] = (int) ( $row['alert_id'] ?? 0 ) + 1;
 				$data['alert_label'] = wp_html_excerpt( sanitize_text_field( $label ), 255, '' );
-				$data['alert_seconds'] = $seconds;
+				$data['alert_seconds'] = $actual_added;
 				$data['alert_created_at'] = $now;
 			}
 			if ( false === $wpdb->update( RFS_DB::table( 'timer_states' ), $data, array( 'streamer_id' => $streamer_id ) ) ) {
@@ -673,7 +688,7 @@ final class RFS_REST {
 			if ( $show_alert ) {
 				$alert_saved = $wpdb->insert(
 					RFS_DB::table( 'alerts' ),
-					array( 'streamer_id' => $streamer_id, 'label' => $data['alert_label'], 'seconds' => $seconds, 'created_at' => $now ),
+					array( 'streamer_id' => $streamer_id, 'label' => $data['alert_label'], 'seconds' => $actual_added, 'created_at' => $now ),
 					array( '%s', '%s', '%d', '%d' )
 				);
 				if ( false === $alert_saved ) {
@@ -688,14 +703,14 @@ final class RFS_REST {
 		}
 	}
 
-	private static function cap_timer( string $streamer_id, int $max_seconds ): void {
+	private static function cap_timer( string $streamer_id, array $config ): void {
 		global $wpdb;
 		self::raw_timer_for_update( $streamer_id );
 		$wpdb->query( 'START TRANSACTION' );
 		try {
 			$row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . RFS_DB::table( 'timer_states' ) . ' WHERE streamer_id = %s FOR UPDATE', $streamer_id ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 			$current = RFS_Core::timer_from_row( (array) $row );
-			$remaining = min( $max_seconds, (int) $current['remainingSeconds'] );
+			$remaining = min( self::effective_timer_limit( $config ), (int) $current['remainingSeconds'] );
 			$running = ! empty( $current['running'] ) && $remaining > 0;
 			if ( false === $wpdb->update( RFS_DB::table( 'timer_states' ), array( 'running' => $running ? 1 : 0, 'remaining_seconds' => $remaining, 'ends_at' => $running ? time() + $remaining : 0, 'updated_at' => time() ), array( 'streamer_id' => $streamer_id ) ) ) {
 				throw new RuntimeException( 'Timer konnte nicht begrenzt werden.' );
@@ -705,6 +720,14 @@ final class RFS_REST {
 			$wpdb->query( 'ROLLBACK' );
 			throw $error;
 		}
+	}
+
+	private static function effective_timer_limit( array $config, ?int $now = null ): int {
+		$limit = max( 0, (int) ( $config['maxSeconds'] ?? 0 ) );
+		if ( 'fixed' === ( $config['endMode'] ?? 'open' ) && (int) ( $config['streamEndAt'] ?? 0 ) > 0 ) {
+			$limit = min( $limit, max( 0, (int) $config['streamEndAt'] - ( $now ?? time() ) ) );
+		}
+		return $limit;
 	}
 
 	private static function mark_revoked( array $subscription ): void {

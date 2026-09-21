@@ -45,6 +45,24 @@ function formatDelta(totalSeconds) {
   return `${sign}${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 }
 
+function toLocalDateTime(timestamp) {
+	if (!timestamp) return "";
+	const date = new Date(Number(timestamp) * 1000);
+	const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+	return local.toISOString().slice(0, 16);
+}
+
+function fromLocalDateTime(value) {
+	if (!value) return 0;
+	const timestamp = new Date(value).getTime();
+	return Number.isFinite(timestamp) ? Math.floor(timestamp / 1000) : 0;
+}
+
+function formatScheduleDate(timestamp) {
+	if (!timestamp) return "nicht festgelegt";
+	return new Intl.DateTimeFormat("de-DE", { dateStyle: "medium", timeStyle: "short" }).format(new Date(Number(timestamp) * 1000));
+}
+
 function currentRemaining() {
   if (!state.timer) return 0;
   if (!state.timer.running) return state.timer.remainingSeconds;
@@ -75,6 +93,17 @@ function renderSleep() {
 	$("#sleepButton").classList.toggle("active", sleeping);
 	$("#sleepAdditionsEnabled").disabled = sleeping;
 	$("#sleepTimerContinues").disabled = sleeping;
+}
+
+function renderSchedule() {
+	const mode = $("#endMode").value;
+	const startAt = fromLocalDateTime($("#streamStartAt").value);
+	const endAt = fromLocalDateTime($("#streamEndAt").value);
+	$("#streamEndField").hidden = mode !== "fixed";
+	$("#streamEndAt").disabled = mode !== "fixed";
+	const startText = startAt ? `Start: ${formatScheduleDate(startAt)}.` : "Noch kein Starttermin festgelegt.";
+	const endText = mode === "fixed" && endAt ? ` Spätestes Ende: ${formatScheduleDate(endAt)}.` : " Das Ende ist offen.";
+	$("#scheduleStatus").textContent = `${startText}${endText}`;
 }
 
 function applyTimer(timer) {
@@ -152,8 +181,12 @@ async function loadDashboard() {
   form.elements.maxHours.value = data.config.maxSeconds / 3600;
 	form.elements.sleepAdditionsEnabled.value = String(data.config.sleepAdditionsEnabled);
 	form.elements.sleepTimerContinues.value = String(data.config.sleepTimerContinues);
+	form.elements.streamStartAt.value = toLocalDateTime(data.config.streamStartAt);
+	form.elements.endMode.value = data.config.endMode;
+	form.elements.streamEndAt.value = toLocalDateTime(data.config.streamEndAt);
   renderTimer();
 	renderSleep();
+	renderSchedule();
   if (!setupReady) showToast("Twitch-Events sind noch nicht vollständig aktiviert");
   clearInterval(state.tick);
   state.tick = setInterval(renderTimer, 250);
@@ -206,6 +239,9 @@ function settingsPayload() {
     maxSeconds: Math.round(Number(form.get("maxHours")) * 3600),
 		sleepAdditionsEnabled: $("#sleepAdditionsEnabled").value === "true",
 		sleepTimerContinues: $("#sleepTimerContinues").value === "true",
+		streamStartAt: fromLocalDateTime($("#streamStartAt").value),
+		endMode: $("#endMode").value,
+		streamEndAt: $("#endMode").value === "fixed" ? fromLocalDateTime($("#streamEndAt").value) : 0,
   };
   for (const rule of rules) {
     payload[`${rule.key}Enabled`] = form.get(`${rule.key}Enabled`) === "on";
@@ -285,6 +321,10 @@ $("#sleepButton").addEventListener("click", async () => {
 		button.disabled = false;
 	}
 });
+
+$("#endMode").addEventListener("change", renderSchedule);
+$("#streamStartAt").addEventListener("change", renderSchedule);
+$("#streamEndAt").addEventListener("change", renderSchedule);
 
 function graphicTime(seconds) {
 	const value = Math.max(0, Math.round(seconds));
@@ -381,8 +421,20 @@ function createRulesGraphic() {
 	context.font = "700 25px Segoe UI, sans-serif";
 	const additions = $("#sleepAdditionsEnabled").value === "true" ? "Support fügt weiter Zeit hinzu" : "Support fügt keine Zeit hinzu";
 	const countdown = $("#sleepTimerContinues").value === "true" ? "Countdown läuft weiter" : "Countdown wird eingefroren";
-	context.fillText(additions, 105, sleepY + 84);
-	context.fillText(countdown, 105, sleepY + 120);
+	context.font = "700 20px Segoe UI, sans-serif";
+	context.fillText(additions, 105, sleepY + 80);
+	context.fillText(countdown, 105, sleepY + 112);
+	context.strokeStyle = "#283140";
+	context.beginPath(); context.moveTo(540, sleepY + 24); context.lineTo(540, sleepY + 126); context.stroke();
+	context.fillStyle = "#7cff4f";
+	context.font = "800 20px Segoe UI, sans-serif";
+	context.fillText("ZEITPLAN", 575, sleepY + 42);
+	context.fillStyle = "#f4f7fb";
+	context.font = "700 20px Segoe UI, sans-serif";
+	const graphicStart = fromLocalDateTime($("#streamStartAt").value);
+	const graphicEnd = fromLocalDateTime($("#streamEndAt").value);
+	context.fillText(graphicStart ? `Start: ${formatScheduleDate(graphicStart)}` : "Start noch offen", 575, sleepY + 80);
+	context.fillText($("#endMode").value === "fixed" && graphicEnd ? `Ende: ${formatScheduleDate(graphicEnd)}` : "Ende offen", 575, sleepY + 112);
 	context.fillStyle = "#6f7b8d";
 	context.font = "600 18px Segoe UI, sans-serif";
 	context.fillText("Die aktuellen Regeln des Streams · Änderungen sind im Live-Dashboard sichtbar", 74, 1310);

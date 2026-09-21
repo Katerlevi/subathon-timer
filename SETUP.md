@@ -35,9 +35,10 @@ Vor dem ersten echten Stream:
 1. Timer starten.
 2. Für jede aktivierte Regel den zugehörigen **Test-Alert** auslösen und prüfen, dass die richtige Zeit addiert wird.
 3. In OBS Bild, Warteschlange und Ton der Test-Alerts kontrollieren; für den Ton bei der Browserquelle **OBS-Audio steuern** aktivieren.
-4. Beide Schlafvarianten testen: Countdown weiterlaufen/einfrieren sowie Support addieren/nicht addieren. Die gewählte Regel muss in der Browserquelle stehen.
-5. Die Social-Media-Regelgrafik erzeugen und inhaltlich prüfen.
-6. Mit einem Twitch-Testkanal mindestens Sub-, Bits- und Follow-Ereignisse testen.
-7. Danach die echten Minutenwerte und das Zeitlimit festlegen.
+4. Beide Schlafvarianten testen: Countdown weiterlaufen/einfrieren sowie Support addieren/nicht addieren. Im Schlafmodus muss ein vollständiger erklärender Satz in der Browserquelle stehen; nach dem Aufwachen muss er verschwinden.
+5. Startdatum und Uhrzeit eintragen. Danach sowohl ein offenes Ende als auch ein festes spätestes Ende testen. Bei festem Ende darf kein Event den Timer über diese Uhrzeit hinaus verlängern.
+6. Die Social-Media-Regelgrafik erzeugen und inhaltlich prüfen.
+7. Mit einem Twitch-Testkanal mindestens Sub-, Bits- und Follow-Ereignisse testen.
+8. Danach die echten Minutenwerte, den Zeitplan und das Zeitlimit festlegen.
 
 Die Oberfläche allein beweist noch nicht, dass echte Twitch-Events ankommen. Das muss nach dem Eintragen der Twitch-Anwendung einmal live geprüft werden.

@@ -99,6 +99,14 @@ input { min-width: 0; width: 100%; border: 0; outline: 0; padding: 15px 16px; ba
 .sleep-button.active { border-color:rgb(255 94 104 / 45%); background:rgb(255 94 104 / 10%); color:#ffc8cc; }
 .live-chip.sleeping { color:#c9f5ff; border-color:rgb(35 213 255 / 32%); }
 .live-chip.sleeping i { background:var(--cyan); box-shadow:0 0 11px rgb(35 213 255 / 65%); }
+.schedule-panel { margin-top:18px; display:grid; grid-template-columns:.8fr 1.2fr; align-items:center; gap:34px; }
+.schedule-copy h2 { font-size:clamp(28px,4vw,46px); }
+.schedule-copy > p:last-child { margin:15px 0 0; color:var(--muted); }
+.schedule-options { display:grid; grid-template-columns:repeat(2,minmax(180px,1fr)); gap:12px; }
+.schedule-options label { margin:0; }
+.schedule-options input, .schedule-options select { width:100%; margin-top:7px; border:1px solid #303b4d; border-radius:10px; padding:12px; outline:0; background:#0a0e14; color:var(--text); color-scheme:dark; }
+.schedule-options input:focus, .schedule-options select:focus { border-color:var(--cyan); box-shadow:0 0 0 3px rgb(35 213 255 / 10%); }
+.schedule-options > p { grid-column:1/-1; margin:2px 0 0; color:#7f8b9d; font-size:12px; }
 .rules-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 .test-hint { margin:-10px 0 18px; color:#7f8b9d; font-size:13px; }
 .rule-card { position: relative; min-height: 242px; padding: 20px; border: 1px solid var(--line); border-radius: 14px; background: #0e131b; overflow: hidden; }
@@ -146,6 +154,8 @@ input { min-width: 0; width: 100%; border: 0; outline: 0; padding: 15px 16px; ba
 	.section-actions { flex-direction:column; }
 	.sleep-panel { grid-template-columns:1fr; }
 	.sleep-options { grid-template-columns:1fr; }
+	.schedule-panel { grid-template-columns:1fr; }
+	.schedule-options { grid-template-columns:1fr; }
   .rules-grid, .limit-inputs { grid-template-columns:1fr; }
   .rule-card { min-height:168px; }
   .quick-adjust { flex-wrap:wrap; }

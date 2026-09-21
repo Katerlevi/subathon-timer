@@ -13,6 +13,7 @@
 - Der persönliche Dashboard-Link ist ein Bearer-Token mit Schreibrechten. Er liegt im URL-Fragment, wird dadurch nicht an WordPress übertragen und wird nach 30 Tagen Inaktivität oder sofort beim Trennen der Twitch-Verbindung ungültig.
 - Die Seite unter `/subathon/` ist nicht verlinkt und mit `noindex` gekennzeichnet. Das ersetzt keine Zugriffskontrolle; geschützt wird das Dashboard durch seinen zufälligen Token.
 - Die Social-Media-Grafik wird ausschließlich lokal im Browser erzeugt; Regelwerte werden dafür nicht an einen Bilddienst übertragen.
+- Ein festes spätestes Streamende wird zusätzlich serverseitig erzwungen. Manuelle Anpassungen, Tests und Twitch-Ereignisse können den Timer nicht über diese Uhrzeit hinaus verlängern.
 
 ## Umgang mit Zugangsdaten
 

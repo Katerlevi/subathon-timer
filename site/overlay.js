@@ -24,6 +24,10 @@ function formatDelta(totalSeconds) {
 	return `+${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 }
 
+function formatScheduleDate(timestamp) {
+	return new Intl.DateTimeFormat("de-DE", { dateStyle: "medium", timeStyle: "short" }).format(new Date(Number(timestamp) * 1000));
+}
+
 function playAlertSound() {
 	try {
 		audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
@@ -95,9 +99,20 @@ async function refresh() {
 		snapshot = incoming;
     document.querySelector("#channel").textContent = snapshot.channel ? `${snapshot.channel.toUpperCase()} · SUBATHON` : "SUBATHON";
 		document.querySelector("#event").textContent = snapshot.sleeping ? "Streamer schläft" : (snapshot.lastEvent || (snapshot.running ? "Timer läuft" : "Timer bereit"));
-		const additions = snapshot.sleepAdditionsEnabled ? "SUPPORT +ZEIT" : "SUPPORT OHNE +ZEIT";
-		const countdown = snapshot.sleepTimerContinues ? "TIMER LÄUFT" : "TIMER PAUSIERT";
-		document.querySelector("#sleepRule").textContent = `SCHLAF: ${additions} · ${countdown}`;
+		const startText = snapshot.streamStartAt ? `Start am ${formatScheduleDate(snapshot.streamStartAt)}.` : "";
+		const endText = snapshot.endMode === "fixed" && snapshot.streamEndAt ? `Spätestes Ende am ${formatScheduleDate(snapshot.streamEndAt)}.` : "Das Streamende ist offen.";
+		document.querySelector("#scheduleRule").textContent = `${startText} ${endText}`.trim();
+		const sleepRule = document.querySelector("#sleepRule");
+		sleepRule.hidden = !snapshot.sleeping;
+		if (snapshot.sleeping) {
+			const additions = snapshot.sleepAdditionsEnabled
+				? "Support wird weiterhin zum Timer addiert"
+				: "Support wird währenddessen nicht zum Timer addiert";
+			const countdown = snapshot.sleepTimerContinues
+				? "der Countdown läuft währenddessen weiter"
+				: "der Countdown ist währenddessen angehalten";
+			sleepRule.textContent = `Schlafmodus aktiv: ${additions} und ${countdown}.`;
+		}
 		enqueueAlerts(snapshot.alerts);
     render();
   } catch { document.querySelector("#event").textContent = "Verbindung wird wiederhergestellt …"; }

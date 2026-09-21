@@ -123,6 +123,29 @@
             </div>
           </section>
 
+					<section class="schedule-panel panel">
+						<div class="schedule-copy">
+							<p class="eyebrow">STREAM-ZEITPLAN</p>
+							<h2>Start und spätestes Ende</h2>
+							<p id="scheduleStatus">Noch kein Starttermin festgelegt; das Ende ist offen.</p>
+						</div>
+						<div class="schedule-options">
+							<label for="streamStartAt">Stream beginnt am
+								<input id="streamStartAt" name="streamStartAt" type="datetime-local" />
+							</label>
+							<label for="endMode">Streamende
+								<select id="endMode" name="endMode">
+									<option value="open">Offenes Ende</option>
+									<option value="fixed">Festes spätestes Ende</option>
+								</select>
+							</label>
+							<label id="streamEndField" for="streamEndAt" hidden>Spätestens zu Ende am
+								<input id="streamEndAt" name="streamEndAt" type="datetime-local" />
+							</label>
+							<p>Ein festes Ende ist eine harte Obergrenze: Zusätzliche Zeit kann den Stream nicht darüber hinaus verlängern.</p>
+						</div>
+					</section>
+
           <section class="rules-section">
             <div class="section-heading">
               <div><p class="eyebrow">AUTOMATISCHE REGELN</p><h2>Was verlängert den Stream?</h2></div>

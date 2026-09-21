@@ -17,14 +17,29 @@ final class RFS_Core {
 	}
 
 	public static function validate_config( array $input ): array {
+		$end_mode = (string) ( $input['endMode'] ?? 'open' );
+		if ( ! in_array( $end_mode, array( 'open', 'fixed' ), true ) ) {
+			throw new InvalidArgumentException( 'Ungültige Einstellung für das Streamende.' );
+		}
 		$result = array(
 			'startSeconds' => self::bounded_int( $input['startSeconds'] ?? null, 0, 2592000 ),
 			'maxSeconds'   => self::bounded_int( $input['maxSeconds'] ?? null, 3600, 2592000 ),
+			'streamStartAt' => self::bounded_int( $input['streamStartAt'] ?? 0, 0, 4102444800 ),
+			'endMode'       => $end_mode,
+			'streamEndAt'   => 'fixed' === $end_mode ? self::bounded_int( $input['streamEndAt'] ?? 0, 1, 4102444800 ) : 0,
 			'sleepAdditionsEnabled' => array_key_exists( 'sleepAdditionsEnabled', $input ) ? ! empty( $input['sleepAdditionsEnabled'] ) : true,
 			'sleepTimerContinues'   => array_key_exists( 'sleepTimerContinues', $input ) ? ! empty( $input['sleepTimerContinues'] ) : true,
 		);
 		if ( $result['maxSeconds'] < $result['startSeconds'] ) {
 			throw new InvalidArgumentException( 'Das Zeitlimit muss mindestens so groß wie die Startzeit sein.' );
+		}
+		if ( 'fixed' === $result['endMode'] ) {
+			if ( $result['streamEndAt'] <= time() ) {
+				throw new InvalidArgumentException( 'Das späteste Streamende muss in der Zukunft liegen.' );
+			}
+			if ( $result['streamStartAt'] > 0 && $result['streamEndAt'] <= $result['streamStartAt'] ) {
+				throw new InvalidArgumentException( 'Das späteste Streamende muss nach dem Start liegen.' );
+			}
 		}
 		foreach ( self::RULE_KEYS as $key ) {
 			$result[ $key . 'Seconds' ] = self::bounded_int( $input[ $key . 'Seconds' ] ?? null, 0, 43200 );

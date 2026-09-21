@@ -12,7 +12,7 @@ let timer = { running: false, remainingSeconds: 14400, endsAt: 0, lastEvent: nul
 let sleepResumeTimer = false;
 let alerts = [];
 let config = {
-	startSeconds: 14400, maxSeconds: 259200, sleepAdditionsEnabled: true, sleepTimerContinues: true,
+	startSeconds: 14400, maxSeconds: 259200, streamStartAt: 0, endMode: "open", streamEndAt: 0, sleepAdditionsEnabled: true, sleepTimerContinues: true,
   tier1Seconds: 240, tier1Enabled: true, tier2Seconds: 480, tier2Enabled: true,
   tier3Seconds: 900, tier3Enabled: true, giftSeconds: 240, giftEnabled: true,
   bitsSeconds: 60, bitsEnabled: true, followSeconds: 0, followEnabled: false,
@@ -22,6 +22,11 @@ let config = {
 function json(response, status, value) {
   response.writeHead(status, { "Content-Type": "application/json", "Cache-Control": "no-store" });
   response.end(status === 204 ? "" : JSON.stringify(value));
+}
+
+function timerLimit() {
+	const untilEnd = config.endMode === "fixed" ? Math.max(0, config.streamEndAt - Math.floor(Date.now() / 1000)) : config.maxSeconds;
+	return Math.min(config.maxSeconds, untilEnd);
 }
 
 async function body(request) {
@@ -41,18 +46,20 @@ createServer(async (request, response) => {
     if (url.pathname === `${api}/overlay/state`) {
       if (request.headers["x-rfs-overlay-key"] !== overlayKey) return json(response, 404, { message: "OBS-Link ungültig." });
 			const after = Number(url.searchParams.get("after") || 0);
-			return json(response, 200, { ...timer, channel: "testkanal", sleepAdditionsEnabled: config.sleepAdditionsEnabled, sleepTimerContinues: config.sleepTimerContinues, alerts: alerts.filter((alert) => alert.id > after) });
+			return json(response, 200, { ...timer, channel: "testkanal", sleepAdditionsEnabled: config.sleepAdditionsEnabled, sleepTimerContinues: config.sleepTimerContinues, streamStartAt: config.streamStartAt, endMode: config.endMode, streamEndAt: config.streamEndAt, alerts: alerts.filter((alert) => alert.id > after) });
     }
     if (request.headers.authorization !== `Bearer ${session}`) return json(response, 401, { message: "Sitzung abgelaufen." });
     if (url.pathname === `${api}/me`) return json(response, 200, { streamer: { login: "testkanal", displayName: "Testkanal", setupStatus: "ready" }, config, timer, overlayKey });
 		if (url.pathname === `${api}/timer/state`) return json(response, 200, { timer });
     if (url.pathname === `${api}/config` && request.method === "PUT") {
       config = await body(request);
+			timer.remainingSeconds = Math.min(timerLimit(), timer.remainingSeconds);
+			if (timer.running) timer.endsAt = Math.floor(Date.now() / 1000) + timer.remainingSeconds;
       return json(response, 200, { config });
     }
     if (url.pathname === `${api}/timer/adjust`) {
       const input = await body(request);
-      timer.remainingSeconds = Math.max(0, timer.remainingSeconds + Number(input.seconds || 0));
+			timer.remainingSeconds = Math.min(timerLimit(), Math.max(0, timer.remainingSeconds + Number(input.seconds || 0)));
       if (timer.running) timer.endsAt = Math.floor(Date.now() / 1000) + timer.remainingSeconds;
       timer.lastEvent = "Manuelle Anpassung";
       return json(response, 200, { timer });
@@ -64,15 +71,17 @@ createServer(async (request, response) => {
 			const configuredSeconds = Number(config[`${input.key}Seconds`] || 0);
 			const blocked = timer.sleeping && !config.sleepAdditionsEnabled;
 			const seconds = blocked ? 0 : configuredSeconds;
-			timer.remainingSeconds = Math.min(config.maxSeconds, Math.max(0, timer.remainingSeconds + seconds));
+			const before = timer.remainingSeconds;
+			timer.remainingSeconds = Math.min(timerLimit(), Math.max(0, timer.remainingSeconds + seconds));
+			const actualAdded = Math.max(0, timer.remainingSeconds - before);
 			if (timer.running) timer.endsAt = Math.floor(Date.now() / 1000) + timer.remainingSeconds;
 			timer.lastEvent = `Test · ${titles[input.key]}${blocked ? " · im Schlafmodus nicht addiert" : ""}`;
 			timer.alertId += 1;
 			timer.alertLabel = timer.lastEvent;
-			timer.alertSeconds = seconds;
+			timer.alertSeconds = actualAdded;
 			timer.alertCreatedAt = Math.floor(Date.now() / 1000);
-			alerts.push({ id: timer.alertId, label: timer.alertLabel, seconds, createdAt: timer.alertCreatedAt });
-			return json(response, 200, { timer, testedSeconds: seconds });
+			alerts.push({ id: timer.alertId, label: timer.alertLabel, seconds: actualAdded, createdAt: timer.alertCreatedAt });
+			return json(response, 200, { timer, testedSeconds: actualAdded });
 		}
 		if (url.pathname === `${api}/sleep/start`) {
 			if (!timer.sleeping) {
@@ -90,6 +99,7 @@ createServer(async (request, response) => {
 		if (url.pathname === `${api}/sleep/end`) {
 			timer.sleeping = false;
 			timer.sleepStartedAt = 0;
+			timer.remainingSeconds = Math.min(timerLimit(), timer.remainingSeconds);
 			if (sleepResumeTimer && timer.remainingSeconds > 0) {
 				timer.running = true;
 				timer.endsAt = Math.floor(Date.now() / 1000) + timer.remainingSeconds;
@@ -98,8 +108,9 @@ createServer(async (request, response) => {
 			return json(response, 200, { timer });
 		}
     if (url.pathname === `${api}/timer/start`) {
-      timer.running = true;
-      timer.endsAt = Math.floor(Date.now() / 1000) + timer.remainingSeconds;
+			timer.remainingSeconds = Math.min(timerLimit(), timer.remainingSeconds);
+			timer.running = timer.remainingSeconds > 0;
+			timer.endsAt = timer.running ? Math.floor(Date.now() / 1000) + timer.remainingSeconds : 0;
       return json(response, 200, { timer });
     }
     if (url.pathname === `${api}/timer/pause`) {
@@ -109,7 +120,7 @@ createServer(async (request, response) => {
       return json(response, 200, { timer });
     }
     if (url.pathname === `${api}/timer/reset`) {
-			timer = { ...timer, running: false, remainingSeconds: config.startSeconds, endsAt: 0, lastEvent: null, alertCreatedAt: 0 };
+			timer = { ...timer, running: false, remainingSeconds: Math.min(timerLimit(), config.startSeconds), endsAt: 0, lastEvent: null, alertCreatedAt: 0 };
       return json(response, 200, { timer });
     }
     if (url.pathname === `${api}/disconnect`) return json(response, 200, { ok: true });

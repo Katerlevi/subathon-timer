@@ -110,14 +110,21 @@ final class RFS_REST {
 			$data = $result->get_data();
 			if ( is_array( $data ) && isset( $data['_rfs_raw_challenge'] ) ) {
 				$status = $result->get_status();
+				$challenge = (string) $data['_rfs_raw_challenge'];
+				self::record_verification_state( 'challenge_sent' );
 				status_header( $status );
 				header( 'Content-Type: text/plain; charset=utf-8' );
+				header( 'Content-Length: ' . strlen( $challenge ) );
 				header( 'Cache-Control: no-store, max-age=0' );
-				echo (string) $data['_rfs_raw_challenge']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				echo $challenge; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 				return true;
 			}
 		}
 		return (bool) $served;
+	}
+
+	private static function record_verification_state( string $state ): void {
+		update_option( 'rfs_eventsub_verification_state', array( 'state' => $state, 'at' => time() ), false );
 	}
 
 	public static function health(): WP_REST_Response {
@@ -284,11 +291,21 @@ final class RFS_REST {
 		$timestamp  = (string) $request->get_header( 'Twitch-Eventsub-Message-Timestamp' );
 		$signature  = (string) $request->get_header( 'Twitch-Eventsub-Message-Signature' );
 		$message_type = (string) $request->get_header( 'Twitch-Eventsub-Message-Type' );
+		$is_verification = 'webhook_callback_verification' === $message_type;
+		if ( $is_verification ) {
+			self::record_verification_state( 'request_received' );
+		}
 		if ( '' === $message_id || strlen( $message_id ) > 128 || '' === $timestamp || '' === $signature ) {
+			if ( $is_verification ) {
+				self::record_verification_state( 'invalid_headers' );
+			}
 			return self::error( 'invalid_headers', 'Ungültige Twitch-Header.', 403 );
 		}
 		$sent_at = strtotime( $timestamp );
 		if ( false === $sent_at || abs( time() - $sent_at ) > 600 ) {
+			if ( $is_verification ) {
+				self::record_verification_state( 'invalid_timestamp' );
+			}
 			return self::error( 'stale_message', 'Veraltete Twitch-Nachricht.', 403 );
 		}
 		try {
@@ -297,6 +314,9 @@ final class RFS_REST {
 			return self::error( 'not_configured', 'Webhook nicht eingerichtet.', 503 );
 		}
 		if ( ! hash_equals( $expected, $signature ) ) {
+			if ( $is_verification ) {
+				self::record_verification_state( 'invalid_signature' );
+			}
 			return self::error( 'invalid_signature', 'Ungültige Twitch-Signatur.', 403 );
 		}
 		$payload = json_decode( $body, true );
@@ -307,8 +327,10 @@ final class RFS_REST {
 		if ( 'webhook_callback_verification' === $message_type ) {
 			$challenge = (string) ( $payload['challenge'] ?? '' );
 			if ( '' === $challenge || strlen( $challenge ) > 512 ) {
+				self::record_verification_state( 'invalid_challenge' );
 				return self::error( 'invalid_challenge', 'Ungültige Twitch-Bestätigung.', 400 );
 			}
+			self::record_verification_state( 'signature_valid' );
 			return new WP_REST_Response( array( '_rfs_raw_challenge' => $challenge ), 200 );
 		}
 

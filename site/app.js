@@ -124,7 +124,7 @@ async function checkChannelPoints() {
 	const status = $("#channelPointsStatus");
 	try {
 		const result = await api("/events/status");
-		const describe = (value) => value === "enabled" ? "aktiv" : value === "webhook_callback_verification_pending" ? "wartet auf Bestätigung" : "nicht aktiv";
+		const describe = (value) => value === "enabled" ? "aktiv" : value === "webhook_callback_verification_pending" ? "wartet auf Bestätigung" : value === "webhook_callback_verification_failed" ? "Bestätigung fehlgeschlagen" : value === "missing" ? "nicht aktiv" : `nicht aktiv (${value})`;
 		status.textContent = `Kanalpunkte: eigene Belohnungen ${describe(result.custom)}, automatische Belohnungen ${describe(result.automatic)}.`;
 	} catch {
 		status.textContent = "Kanalpunkte-Verbindung konnte gerade nicht geprüft werden.";

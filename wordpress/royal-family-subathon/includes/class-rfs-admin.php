@@ -57,6 +57,7 @@ final class RFS_Admin {
 		<div class="wrap">
 			<h1>Royal Family Subathon Timer</h1>
 			<?php settings_errors( 'rfs_messages' ); ?>
+			<?php $verification = (array) get_option( 'rfs_eventsub_verification_state', array() ); ?>
 			<p>Das Plugin verbindet die versteckte Subathon-Seite sicher mit Twitch. Es verändert weder das Theme noch die öffentliche Navigation.</p>
 			<table class="widefat striped" style="max-width:1000px;margin:18px 0">
 				<tbody>
@@ -64,6 +65,7 @@ final class RFS_Admin {
 					<tr><th>Versteckte Seite</th><td><code><?php echo esc_html( home_url( '/subathon/' ) ); ?></code></td></tr>
 					<tr><th>OAuth-Weiterleitungs-URL</th><td><code><?php echo esc_html( RFS_Twitch::callback_url() ); ?></code></td></tr>
 					<tr><th>EventSub-Webhook</th><td><code><?php echo esc_html( RFS_Twitch::webhook_url() ); ?></code></td></tr>
+					<tr><th>Letzte Webhook-Bestätigung</th><td><?php echo esc_html( isset( $verification['at'], $verification['state'] ) ? wp_date( 'd.m.Y H:i:s', (int) $verification['at'] ) . ' – ' . (string) $verification['state'] : 'Noch kein Bestätigungsaufruf protokolliert' ); ?></td></tr>
 				</tbody>
 			</table>
 			<form method="post">

@@ -28,9 +28,10 @@ function formatScheduleDate(timestamp) {
 	return new Intl.DateTimeFormat("de-DE", { dateStyle: "medium", timeStyle: "short" }).format(new Date(Number(timestamp) * 1000));
 }
 
-function playAlertSound() {
+async function playAlertSound() {
 	try {
 		audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
+		if (audioContext.state === "suspended") await audioContext.resume();
 		const start = audioContext.currentTime;
 		for (const [delay, frequency] of [[0, 523.25], [0.12, 659.25], [0.24, 783.99]]) {
 			const oscillator = audioContext.createOscillator();

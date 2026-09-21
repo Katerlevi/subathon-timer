@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 final class RFS_DB {
-	private const VERSION = '1.2.0';
+	private const VERSION = '1.3.0';
 
 	public static function table( string $name ): string {
 		global $wpdb;
@@ -73,6 +73,7 @@ final class RFS_DB {
 			streamer_id char(36) NOT NULL,
 			start_seconds int(11) unsigned NOT NULL DEFAULT 14400,
 			max_seconds int(11) unsigned NOT NULL DEFAULT 259200,
+			max_mode varchar(16) NOT NULL DEFAULT 'limited',
 			stream_start_at bigint(20) unsigned NOT NULL DEFAULT 0,
 			end_mode varchar(16) NOT NULL DEFAULT 'open',
 			stream_end_at bigint(20) unsigned NOT NULL DEFAULT 0,

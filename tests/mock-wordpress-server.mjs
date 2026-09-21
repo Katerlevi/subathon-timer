@@ -12,7 +12,7 @@ let timer = { running: false, remainingSeconds: 14400, endsAt: 0, lastEvent: nul
 let sleepResumeTimer = false;
 let alerts = [];
 let config = {
-	startSeconds: 14400, maxSeconds: 259200, streamStartAt: 0, endMode: "open", streamEndAt: 0, sleepAdditionsEnabled: true, sleepTimerContinues: true,
+	startSeconds: 14400, maxSeconds: 259200, maxMode: "limited", streamStartAt: 0, endMode: "open", streamEndAt: 0, sleepAdditionsEnabled: true, sleepTimerContinues: true,
   tier1Seconds: 240, tier1Enabled: true, tier2Seconds: 480, tier2Enabled: true,
   tier3Seconds: 900, tier3Enabled: true, giftSeconds: 240, giftEnabled: true,
   bitsSeconds: 60, bitsEnabled: true, followSeconds: 0, followEnabled: false,
@@ -25,8 +25,9 @@ function json(response, status, value) {
 }
 
 function timerLimit() {
-	const untilEnd = config.endMode === "fixed" ? Math.max(0, config.streamEndAt - Math.floor(Date.now() / 1000)) : config.maxSeconds;
-	return Math.min(config.maxSeconds, untilEnd);
+	const maximum = config.maxMode === "open" ? Number.MAX_SAFE_INTEGER : config.maxSeconds;
+	const untilEnd = config.endMode === "fixed" ? Math.max(0, config.streamEndAt - Math.floor(Date.now() / 1000)) : maximum;
+	return Math.min(maximum, untilEnd);
 }
 
 async function body(request) {
@@ -46,10 +47,12 @@ createServer(async (request, response) => {
     if (url.pathname === `${api}/overlay/state`) {
       if (request.headers["x-rfs-overlay-key"] !== overlayKey) return json(response, 404, { message: "OBS-Link ungültig." });
 			const after = Number(url.searchParams.get("after") || 0);
-			return json(response, 200, { ...timer, channel: "testkanal", sleepAdditionsEnabled: config.sleepAdditionsEnabled, sleepTimerContinues: config.sleepTimerContinues, streamStartAt: config.streamStartAt, endMode: config.endMode, streamEndAt: config.streamEndAt, alerts: alerts.filter((alert) => alert.id > after) });
+			return json(response, 200, { ...timer, channel: "testkanal", sleepAdditionsEnabled: config.sleepAdditionsEnabled, sleepTimerContinues: config.sleepTimerContinues, streamStartAt: config.streamStartAt, endMode: config.endMode, streamEndAt: config.streamEndAt, alerts: alerts.filter((alert) => alert.id > after), recentActions: alerts.filter((alert) => alert.seconds > 0).slice(-3).reverse() });
     }
     if (request.headers.authorization !== `Bearer ${session}`) return json(response, 401, { message: "Sitzung abgelaufen." });
     if (url.pathname === `${api}/me`) return json(response, 200, { streamer: { login: "testkanal", displayName: "Testkanal", setupStatus: "ready" }, config, timer, overlayKey });
+		if (url.pathname === `${api}/events/refresh` && request.method === "POST") return json(response, 200, { ok: true, message: "Twitch-Ereignisse angefordert. Die Aktivierung kann kurz dauern." });
+		if (url.pathname === `${api}/events/status`) return json(response, 200, { custom: "enabled", automatic: "enabled" });
 		if (url.pathname === `${api}/timer/state`) return json(response, 200, { timer });
     if (url.pathname === `${api}/config` && request.method === "PUT") {
       config = await body(request);

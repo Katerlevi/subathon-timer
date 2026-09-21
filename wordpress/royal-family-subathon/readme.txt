@@ -2,7 +2,7 @@
 Contributors: royalfamily
 Requires at least: 6.0
 Requires PHP: 7.4
-Stable tag: 1.2.0
+Stable tag: 1.3.1
 License: Proprietary
 
 Sicherer Twitch-Subathon-Timer für die versteckte RoyalFamily.gg-Seite.
@@ -10,6 +10,10 @@ Sicherer Twitch-Subathon-Timer für die versteckte RoyalFamily.gg-Seite.
 Version 1.1 ergänzt Regeltests mit OBS-Alerts, einen konfigurierbaren Schlafmodus und eine Social-Media-Regelgrafik.
 
 Version 1.2 ergänzt den öffentlichen Stream-Zeitplan mit offenem oder festem spätestem Ende.
+
+Version 1.3 ergänzt eine offene maximale Laufzeit, verbessert die OBS-Tonausgabe und liefert ein separates Aktionsfenster für die letzten drei Zeitgeber.
+
+Version 1.3.1 ergänzt automatische Twitch-Kanalpunkt-Belohnungen und eine Schaltfläche zum erneuten Anmelden der Twitch-Ereignisse.
 
 == Installation ==
 

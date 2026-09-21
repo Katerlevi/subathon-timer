@@ -10,7 +10,7 @@ const rules = [
   { key: "bits", icon: "B", title: "100 Bits", detail: "Je vollem 100er-Schritt", color: "#ffd05c", defaultMinutes: 1 },
   { key: "follow", icon: "F", title: "Follow", detail: "Neuer Kanal-Follow", color: "#5ee6c4", defaultMinutes: 0 },
   { key: "raid", icon: "R", title: "Raid-Zuschauer", detail: "Pro Raid-Zuschauer", color: "#ff835c", defaultMinutes: 0.1 },
-  { key: "reward", icon: "CP", title: "Channel Points", detail: "Je Reward-Einlösung", color: "#7795ff", defaultMinutes: 2 },
+  { key: "reward", icon: "CP", title: "Kanalpunkte", detail: "Je eigene oder automatische Belohnung", color: "#7795ff", defaultMinutes: 2 },
 ];
 
 const $ = (selector) => document.querySelector(selector);
@@ -106,11 +106,29 @@ function renderSchedule() {
 	$("#scheduleStatus").textContent = `${startText}${endText}`;
 }
 
+function renderMaximumTime() {
+	const open = $("#maxMode").value === "open";
+	$("#maxHoursField").hidden = open;
+	$("#maxHours").disabled = open;
+	$("#maxHours").required = !open;
+}
+
 function applyTimer(timer) {
 	state.timer = timer;
 	$("#lastEvent").textContent = timer.lastEvent || "Noch kein Event empfangen";
 	renderTimer();
 	renderSleep();
+}
+
+async function checkChannelPoints() {
+	const status = $("#channelPointsStatus");
+	try {
+		const result = await api("/events/status");
+		const describe = (value) => value === "enabled" ? "aktiv" : value === "webhook_callback_verification_pending" ? "wartet auf Bestätigung" : "nicht aktiv";
+		status.textContent = `Kanalpunkte: eigene Belohnungen ${describe(result.custom)}, automatische Belohnungen ${describe(result.automatic)}.`;
+	} catch {
+		status.textContent = "Kanalpunkte-Verbindung konnte gerade nicht geprüft werden.";
+	}
 }
 
 function renderRules(config = {}) {
@@ -175,10 +193,12 @@ async function loadDashboard() {
   const appBase = `${location.origin}${location.pathname.replace(/[^/]*$/, "")}`;
   $("#dashboardUrl").value = `${appBase}#session=${encodeURIComponent(state.session)}`;
   $("#overlayUrl").value = `${appBase}overlay.html#api=${encodeURIComponent(apiBase)}&key=${encodeURIComponent(data.overlayKey)}`;
+  $("#activityUrl").value = `${appBase}activity.html#api=${encodeURIComponent(apiBase)}&key=${encodeURIComponent(data.overlayKey)}`;
   renderRules(data.config);
   const form = $("#settingsForm");
   form.elements.startHours.value = data.config.startSeconds / 3600;
   form.elements.maxHours.value = data.config.maxSeconds / 3600;
+	form.elements.maxMode.value = data.config.maxMode || "limited";
 	form.elements.sleepAdditionsEnabled.value = String(data.config.sleepAdditionsEnabled);
 	form.elements.sleepTimerContinues.value = String(data.config.sleepTimerContinues);
 	form.elements.streamStartAt.value = toLocalDateTime(data.config.streamStartAt);
@@ -187,6 +207,8 @@ async function loadDashboard() {
   renderTimer();
 	renderSleep();
 	renderSchedule();
+  renderMaximumTime();
+	checkChannelPoints();
   if (!setupReady) showToast("Twitch-Events sind noch nicht vollständig aktiviert");
   clearInterval(state.tick);
   state.tick = setInterval(renderTimer, 250);
@@ -236,7 +258,8 @@ function settingsPayload() {
 	const form = new FormData($("#settingsForm"));
   const payload = {
     startSeconds: Math.round(Number(form.get("startHours")) * 3600),
-    maxSeconds: Math.round(Number(form.get("maxHours")) * 3600),
+		maxMode: $("#maxMode").value,
+    maxSeconds: Math.round(Number($("#maxHours").value) * 3600),
 		sleepAdditionsEnabled: $("#sleepAdditionsEnabled").value === "true",
 		sleepTimerContinues: $("#sleepTimerContinues").value === "true",
 		streamStartAt: fromLocalDateTime($("#streamStartAt").value),
@@ -283,6 +306,21 @@ document.querySelectorAll("[data-adjust]").forEach((button) => button.addEventLi
   } catch { showToast("Timer konnte nicht angepasst werden"); }
 }));
 
+$("#refreshEventsButton").addEventListener("click", async () => {
+	const button = $("#refreshEventsButton");
+	button.disabled = true;
+	try {
+		const result = await api("/events/refresh", { method: "POST" });
+		$("#connectionBadge").innerHTML = "<span></span>Twitch verbunden";
+		showToast(result.message);
+		await checkChannelPoints();
+	} catch (error) {
+		showToast(error.message || "Twitch-Ereignisse konnten nicht aktualisiert werden");
+	} finally {
+		button.disabled = false;
+	}
+});
+
 $("#rulesGrid").addEventListener("change", (event) => {
 	if (!event.target.matches("input[type='checkbox']")) return;
 	const button = event.target.closest(".rule-card")?.querySelector("[data-test-rule]");
@@ -325,6 +363,7 @@ $("#sleepButton").addEventListener("click", async () => {
 $("#endMode").addEventListener("change", renderSchedule);
 $("#streamStartAt").addEventListener("change", renderSchedule);
 $("#streamEndAt").addEventListener("change", renderSchedule);
+$("#maxMode").addEventListener("change", renderMaximumTime);
 
 function graphicTime(seconds) {
 	const value = Math.max(0, Math.round(seconds));
@@ -456,6 +495,7 @@ async function copySecret(inputSelector, successMessage) {
 
 $("#copyDashboardButton").addEventListener("click", () => copySecret("#dashboardUrl", "Dashboard-Link kopiert"));
 $("#copyOverlayButton").addEventListener("click", () => copySecret("#overlayUrl", "OBS-Link kopiert"));
+$("#copyActivityButton").addEventListener("click", () => copySecret("#activityUrl", "Aktionsfenster-Link kopiert"));
 
 $("#disconnectButton").addEventListener("click", async () => {
   if (!confirm("Twitch-Verbindung und gespeicherte Tokens entfernen?")) return;

@@ -75,6 +75,16 @@ final class RFS_REST {
 		);
 		register_rest_route(
 			self::NAMESPACE,
+			'/events/status',
+			array( 'methods' => 'GET', 'callback' => array( __CLASS__, 'events_status' ), 'permission_callback' => array( __CLASS__, 'require_session' ) )
+		);
+		register_rest_route(
+			self::NAMESPACE,
+			'/events/refresh',
+			array( 'methods' => 'POST', 'callback' => array( __CLASS__, 'refresh_events' ), 'permission_callback' => array( __CLASS__, 'require_session' ) )
+		);
+		register_rest_route(
+			self::NAMESPACE,
 			'/sleep/(?P<action>start|end)',
 			array( 'methods' => 'POST', 'callback' => array( __CLASS__, 'sleep_action' ), 'permission_callback' => array( __CLASS__, 'require_session' ) )
 		);
@@ -396,6 +406,19 @@ final class RFS_REST {
 			},
 			(array) $alerts
 		);
+		$recent_actions = $wpdb->get_results(
+			$wpdb->prepare(
+				'SELECT id, label, seconds, created_at FROM ' . RFS_DB::table( 'alerts' ) . ' WHERE streamer_id = %s AND seconds > 0 ORDER BY id DESC LIMIT 3',
+				(string) $streamer['id']
+			),
+			ARRAY_A
+		); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
+		$timer['recentActions'] = array_map(
+			static function ( array $alert ): array {
+				return array( 'id' => (int) $alert['id'], 'label' => (string) $alert['label'], 'seconds' => (int) $alert['seconds'], 'createdAt' => (int) $alert['created_at'] );
+			},
+			(array) $recent_actions
+		);
 		return self::response( $timer );
 	}
 
@@ -501,6 +524,34 @@ final class RFS_REST {
 		return self::response( array( 'timer' => $updated, 'testedSeconds' => (int) $updated['alertSeconds'] ) );
 	}
 
+	public static function refresh_events( WP_REST_Request $request ) {
+		$streamer = (array) $request->get_param( '_rfs_auth' );
+		$rate_key = 'rfs_events_refresh_' . md5( (string) $streamer['id'] );
+		if ( get_transient( $rate_key ) ) {
+			return self::error( 'rate_limited', 'Bitte warte eine Minute, bevor du die Twitch-Ereignisse erneut prüfst.', 429 );
+		}
+		set_transient( $rate_key, 1, MINUTE_IN_SECONDS );
+		try {
+			RFS_Twitch::setup_subscriptions( (string) $streamer['twitch_user_id'] );
+			global $wpdb;
+			$wpdb->update( RFS_DB::table( 'streamers' ), array( 'setup_status' => 'ready', 'updated_at' => time() ), array( 'id' => (string) $streamer['id'] ) );
+			return self::response( array( 'ok' => true, 'message' => 'Twitch-Ereignisse angefordert. Die Aktivierung kann kurz dauern.' ) );
+		} catch ( Throwable $error ) {
+			global $wpdb;
+			$wpdb->update( RFS_DB::table( 'streamers' ), array( 'setup_status' => 'error', 'updated_at' => time() ), array( 'id' => (string) $streamer['id'] ) );
+			return self::error( 'eventsub_error', 'Twitch-Ereignisse konnten nicht aktiviert werden. Bitte versuche es später erneut.', 502 );
+		}
+	}
+
+	public static function events_status( WP_REST_Request $request ) {
+		$streamer = (array) $request->get_param( '_rfs_auth' );
+		try {
+			return self::response( RFS_Twitch::channel_points_status( (string) $streamer['twitch_user_id'] ) );
+		} catch ( Throwable $error ) {
+			return self::error( 'eventsub_unavailable', 'Der Twitch-Ereignisstatus ist momentan nicht erreichbar.', 502 );
+		}
+	}
+
 	public static function sleep_action( WP_REST_Request $request ) {
 		$streamer = (array) $request->get_param( '_rfs_auth' );
 		$id       = (string) $streamer['id'];
@@ -595,6 +646,7 @@ final class RFS_REST {
 		$config = array(
 			'startSeconds' => (int) ( $row['start_seconds'] ?? 14400 ),
 			'maxSeconds' => (int) ( $row['max_seconds'] ?? 259200 ),
+			'maxMode' => 'open' === ( $row['max_mode'] ?? 'limited' ) ? 'open' : 'limited',
 			'streamStartAt' => (int) ( $row['stream_start_at'] ?? 0 ),
 			'endMode' => 'fixed' === ( $row['end_mode'] ?? 'open' ) ? 'fixed' : 'open',
 			'streamEndAt' => (int) ( $row['stream_end_at'] ?? 0 ),
@@ -612,6 +664,7 @@ final class RFS_REST {
 		$row = array(
 			'start_seconds' => (int) $config['startSeconds'],
 			'max_seconds' => (int) $config['maxSeconds'],
+			'max_mode' => (string) $config['maxMode'],
 			'stream_start_at' => (int) $config['streamStartAt'],
 			'end_mode' => (string) $config['endMode'],
 			'stream_end_at' => (int) $config['streamEndAt'],
@@ -723,7 +776,7 @@ final class RFS_REST {
 	}
 
 	private static function effective_timer_limit( array $config, ?int $now = null ): int {
-		$limit = max( 0, (int) ( $config['maxSeconds'] ?? 0 ) );
+		$limit = 'open' === ( $config['maxMode'] ?? 'limited' ) ? 4294967295 : max( 0, (int) ( $config['maxSeconds'] ?? 0 ) );
 		if ( 'fixed' === ( $config['endMode'] ?? 'open' ) && (int) ( $config['streamEndAt'] ?? 0 ) > 0 ) {
 			$limit = min( $limit, max( 0, (int) $config['streamEndAt'] - ( $now ?? time() ) ) );
 		}

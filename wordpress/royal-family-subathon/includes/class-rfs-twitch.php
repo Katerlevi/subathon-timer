@@ -111,6 +111,7 @@ final class RFS_Twitch {
 			array( 'channel.follow', '2', array( 'broadcaster_user_id' => $broadcaster_id, 'moderator_user_id' => $broadcaster_id ) ),
 			array( 'channel.raid', '1', array( 'to_broadcaster_user_id' => $broadcaster_id ) ),
 			array( 'channel.channel_points_custom_reward_redemption.add', '1', array( 'broadcaster_user_id' => $broadcaster_id ) ),
+			array( 'channel.channel_points_automatic_reward_redemption.add', '2', array( 'broadcaster_user_id' => $broadcaster_id ) ),
 		);
 
 		foreach ( $items as $item ) {
@@ -137,6 +138,39 @@ final class RFS_Twitch {
 				throw new RuntimeException( 'Twitch EventSub konnte nicht vollständig eingerichtet werden.' );
 			}
 		}
+	}
+
+	public static function channel_points_status( string $broadcaster_id ): array {
+		$statuses = array( 'custom' => 'missing', 'automatic' => 'missing' );
+		$types = array(
+			'channel.channel_points_custom_reward_redemption.add' => array( 'custom', '1' ),
+			'channel.channel_points_automatic_reward_redemption.add' => array( 'automatic', '2' ),
+		);
+		$token = self::app_token();
+		$cursor = '';
+		for ( $page = 0; $page < 10; $page++ ) {
+			$url = self::API_BASE . '/eventsub/subscriptions?first=100';
+			if ( '' !== $cursor ) {
+				$url = add_query_arg( 'after', $cursor, $url );
+			}
+			$payload = self::request_json( $url, array( 'method' => 'GET', 'timeout' => 15, 'headers' => self::api_headers( $token ) ) );
+			foreach ( (array) ( $payload['data'] ?? array() ) as $subscription ) {
+				$type = (string) ( $subscription['type'] ?? '' );
+				if ( ! isset( $types[ $type ] ) || (string) ( $subscription['version'] ?? '' ) !== $types[ $type ][1] || (string) ( $subscription['condition']['broadcaster_user_id'] ?? '' ) !== $broadcaster_id || (string) ( $subscription['transport']['callback'] ?? '' ) !== self::webhook_url() ) {
+					continue;
+				}
+				$key = $types[ $type ][0];
+				$status = (string) ( $subscription['status'] ?? 'unknown' );
+				if ( 'enabled' === $status || 'enabled' !== $statuses[ $key ] ) {
+					$statuses[ $key ] = $status;
+				}
+			}
+			$cursor = (string) ( $payload['pagination']['cursor'] ?? '' );
+			if ( '' === $cursor ) {
+				break;
+			}
+		}
+		return $statuses;
 	}
 
 	public static function revoke_token( string $access_token ): void {

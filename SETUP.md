@@ -26,7 +26,7 @@ Cloudflare, D1 und ein separater Server sind nicht erforderlich.
 
 ## 4. Twitch verbinden
 
-Die nicht gelistete Seite unter `https://royalfamily.gg/subathon/` öffnen, Twitch-Kanalnamen eingeben und **Mit Twitch verbinden** wählen. Nach erfolgreicher Freigabe erscheinen ein persönlicher Dashboard-Link und ein separater OBS-Link. Der Dashboard-Link kann den Timer steuern und muss geheim bleiben. In OBS eine Browserquelle mit 1920 x 220 Pixeln anlegen und ausschließlich den OBS-Link einfügen.
+Die nicht gelistete Seite unter `https://royalfamily.gg/subathon/` öffnen, Twitch-Kanalnamen eingeben und **Mit Twitch verbinden** wählen. Nach erfolgreicher Freigabe erscheinen ein persönlicher Dashboard-Link, der OBS-Timer-Link und ein eigener Link für die letzten drei Zeitgeber. Der Dashboard-Link kann den Timer steuern und muss geheim bleiben. In OBS die Timerquelle mit 1920 x 220 Pixeln sowie optional das Aktionsfenster mit 620 x 360 Pixeln anlegen und jeweils den passenden Link vollständig einfügen.
 
 ## 5. Funktionstest
 
@@ -34,11 +34,11 @@ Vor dem ersten echten Stream:
 
 1. Timer starten.
 2. Für jede aktivierte Regel den zugehörigen **Test-Alert** auslösen und prüfen, dass die richtige Zeit addiert wird.
-3. In OBS Bild, Warteschlange und Ton der Test-Alerts kontrollieren; für den Ton bei der Browserquelle **OBS-Audio steuern** aktivieren.
+3. In OBS Bild, Warteschlange, die letzten drei Zeitgeber und den Ton der Test-Alerts kontrollieren; für den Ton bei der Timer-Browserquelle **OBS-Audio steuern** aktivieren.
 4. Beide Schlafvarianten testen: Countdown weiterlaufen/einfrieren sowie Support addieren/nicht addieren. Im Schlafmodus muss ein vollständiger erklärender Satz in der Browserquelle stehen; nach dem Aufwachen muss er verschwinden.
 5. Startdatum und Uhrzeit eintragen. Danach sowohl ein offenes Ende als auch ein festes spätestes Ende testen. Bei festem Ende darf kein Event den Timer über diese Uhrzeit hinaus verlängern.
 6. Die Social-Media-Regelgrafik erzeugen und inhaltlich prüfen.
-7. Mit einem Twitch-Testkanal mindestens Sub-, Bits- und Follow-Ereignisse testen.
+7. Im Dashboard prüfen, ob beide Kanalpunkte-Abos als aktiv angezeigt werden. Falls nicht, **Twitch-Ereignisse aktualisieren** wählen und nach kurzer Wartezeit neu laden. Eine eigene und eine automatische Kanalpunkt-Belohnung tatsächlich einlösen; erst das prüft die Twitch-Verbindung. Zusätzlich Sub-, Bits- und Follow-Ereignisse testen.
 8. Danach die echten Minutenwerte, den Zeitplan und das Zeitlimit festlegen.
 
 Die Oberfläche allein beweist noch nicht, dass echte Twitch-Events ankommen. Das muss nach dem Eintragen der Twitch-Anwendung einmal live geprüft werden.

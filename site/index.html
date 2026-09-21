@@ -11,9 +11,9 @@
     <meta name="description" content="Sicherer Twitch Subathon Timer mit automatischen Events und OBS-Browserquelle." />
     <title>Subathon Timer</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-    <link rel="stylesheet" href="styles.css" />
-    <script src="config.js"></script>
-    <script src="app.js" defer></script>
+    <link rel="stylesheet" href="styles.css?v=1.3.1" />
+    <script src="config.js?v=1.3.1"></script>
+    <script src="app.js?v=1.3.1" defer></script>
   </head>
   <body>
     <div class="noise" aria-hidden="true"></div>
@@ -76,6 +76,11 @@
               <button type="button" data-adjust="60">+ 1 Min</button>
               <button type="button" data-adjust="600">+ 10 Min</button>
             </div>
+					<div class="event-health">
+						<button class="secondary-button" id="refreshEventsButton" type="button">Twitch-Ereignisse aktualisieren</button>
+						<p id="channelPointsStatus" role="status">Kanalpunkte-Verbindung wird geprüft …</p>
+						<p>Falls echte Kanalpunkte, Subs oder Follows ausbleiben: Hier die Twitch-Ereignisse erneut anmelden. Test-Alerts prüfen nur den Timer, nicht die Verbindung zu Twitch.</p>
+					</div>
           </section>
 
           <section class="obs-panel panel">
@@ -96,6 +101,12 @@
               <button id="copyOverlayButton" type="button">Kopieren</button>
             </div>
             <p class="microcopy">In OBS als Browserquelle mit 1920 × 220 px einfügen und für den Alert-Ton „OBS-Audio steuern“ aktivieren. Dieser Link kann den Timer nicht steuern.</p>
+            <label for="activityUrl">Aktionsfenster · letzte 3 Zeitgeber</label>
+            <div class="copy-field">
+              <input id="activityUrl" readonly />
+              <button id="copyActivityButton" type="button">Kopieren</button>
+            </div>
+            <p class="microcopy">Als zweite Browserquelle mit 620 × 360 px einfügen und in OBS rechts neben dem Timer platzieren.</p>
           </section>
         </div>
 
@@ -154,7 +165,7 @@
 								<button class="primary-button compact" type="submit">Änderungen speichern</button>
 							</div>
             </div>
-            <p class="test-hint">Die Testknöpfe speichern zuerst deine aktuellen Werte, addieren genau diese Zeit und zeigen denselben Alert in OBS wie ein echtes Twitch-Ereignis.</p>
+            <p class="test-hint">Die Testknöpfe speichern zuerst deine aktuellen Werte, addieren genau diese Zeit und zeigen denselben Alert in OBS. Sie prüfen nicht, ob Twitch echte Ereignisse sendet.</p>
             <div class="rules-grid" id="rulesGrid"></div>
           </section>
 
@@ -162,7 +173,13 @@
             <div><p class="eyebrow">ZEITRAHMEN</p><h2>Start und Limit</h2></div>
             <div class="limit-inputs">
               <label>Startzeit <span><input name="startHours" type="number" min="0" max="720" step="0.5" required /> Stunden</span></label>
-              <label>Maximale Zeit <span><input name="maxHours" type="number" min="1" max="720" step="0.5" required /> Stunden</span></label>
+              <label for="maxMode">Maximale Zeit
+                <select id="maxMode" name="maxMode">
+                  <option value="limited">Begrenzt</option>
+                  <option value="open">Offen</option>
+                </select>
+              </label>
+              <label id="maxHoursField">Zeitlimit <span><input id="maxHours" name="maxHours" type="number" min="1" max="720" step="0.5" required /> Stunden</span></label>
             </div>
           </section>
         </form>

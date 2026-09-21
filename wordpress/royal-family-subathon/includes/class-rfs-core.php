@@ -21,16 +21,21 @@ final class RFS_Core {
 		if ( ! in_array( $end_mode, array( 'open', 'fixed' ), true ) ) {
 			throw new InvalidArgumentException( 'Ungültige Einstellung für das Streamende.' );
 		}
+		$max_mode = (string) ( $input['maxMode'] ?? 'limited' );
+		if ( ! in_array( $max_mode, array( 'limited', 'open' ), true ) ) {
+			throw new InvalidArgumentException( 'Ungültige Einstellung für die maximale Zeit.' );
+		}
 		$result = array(
 			'startSeconds' => self::bounded_int( $input['startSeconds'] ?? null, 0, 2592000 ),
 			'maxSeconds'   => self::bounded_int( $input['maxSeconds'] ?? null, 3600, 2592000 ),
+			'maxMode'      => $max_mode,
 			'streamStartAt' => self::bounded_int( $input['streamStartAt'] ?? 0, 0, 4102444800 ),
 			'endMode'       => $end_mode,
 			'streamEndAt'   => 'fixed' === $end_mode ? self::bounded_int( $input['streamEndAt'] ?? 0, 1, 4102444800 ) : 0,
 			'sleepAdditionsEnabled' => array_key_exists( 'sleepAdditionsEnabled', $input ) ? ! empty( $input['sleepAdditionsEnabled'] ) : true,
 			'sleepTimerContinues'   => array_key_exists( 'sleepTimerContinues', $input ) ? ! empty( $input['sleepTimerContinues'] ) : true,
 		);
-		if ( $result['maxSeconds'] < $result['startSeconds'] ) {
+		if ( 'limited' === $result['maxMode'] && $result['maxSeconds'] < $result['startSeconds'] ) {
 			throw new InvalidArgumentException( 'Das Zeitlimit muss mindestens so groß wie die Startzeit sein.' );
 		}
 		if ( 'fixed' === $result['endMode'] ) {
@@ -93,6 +98,17 @@ final class RFS_Core {
 
 		if ( 'channel.channel_points_custom_reward_redemption.add' === $type ) {
 			return self::rule_result( 'reward', $config, 'Channel Points · ' . ( $event['reward']['title'] ?? 'Belohnung' ) );
+		}
+		if ( 'channel.channel_points_automatic_reward_redemption.add' === $type ) {
+			$reward_type = (string) ( $event['reward']['type'] ?? '' );
+			$labels = array(
+				'send_highlighted_message' => 'Nachricht hervorheben',
+				'choose_sub_emote' => 'Sub-Emote wählen',
+				'random_sub_emote_unlock' => 'Zufälligen Sub-Emote freischalten',
+				'chosen_sub_emote_unlock' => 'Sub-Emote freischalten',
+				'choose_modified_sub_emote' => 'Emote verändern',
+			);
+			return self::rule_result( 'reward', $config, 'Channel Points · ' . ( $labels[ $reward_type ] ?? 'Automatische Belohnung' ) );
 		}
 
 		return array( 'seconds' => 0, 'label' => '', 'enabled' => false );

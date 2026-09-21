@@ -1,4 +1,3 @@
 window.SUBATHON_CONFIG = Object.freeze({
-  apiBase: "https://DEIN-WORKER.workers.dev",
+  apiBase: "/wp-json/royal-family-subathon/v1",
 });
-

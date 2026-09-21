@@ -16,7 +16,15 @@
     <main class="overlay" id="overlay">
       <div class="label"><span></span><b id="channel">SUBATHON</b></div>
       <time id="timer">00:00:00</time>
-      <div class="event" id="event">Timer bereit</div>
+			<div class="event-info">
+				<div class="event" id="event">Timer bereit</div>
+				<div class="sleep-rule" id="sleepRule">SCHLAF: SUPPORT +ZEIT · TIMER LÄUFT</div>
+			</div>
+      <section class="alert" id="alert" aria-live="polite">
+        <span id="alertType">TWITCH-EVENT</span>
+        <strong id="alertLabel">Test · Follow</strong>
+        <b id="alertTime">+00:00</b>
+      </section>
     </main>
   </body>
 </html>

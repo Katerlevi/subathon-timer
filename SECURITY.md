@@ -2,19 +2,21 @@
 
 ## Sicherheitsmodell
 
-- Twitch-Client-Secret und Verschlüsselungsschlüssel liegen nur in Worker-Secrets.
+- Twitch-Client-Secret, OAuth-Tokens, Webhook-Secret und OBS-Schlüssel werden serverseitig mit einem aus den WordPress-Salts abgeleiteten Schlüssel verschlüsselt gespeichert.
 - OAuth-Zustände sind einmalig, zeitlich begrenzt und gehasht gespeichert.
-- Sitzungs- und Overlay-Schlüssel werden nur gehasht in der Datenbank abgelegt.
-- Twitch-Tokens werden vor dem Speichern mit AES-GCM verschlüsselt.
+- Sitzungs- und Overlay-Schlüssel werden für die Prüfung zusätzlich nur gehasht abgelegt.
+- Für die Verschlüsselung wird bevorzugt Sodium Secretbox und ersatzweise AES-256-GCM verwendet.
 - EventSub-Nachrichten werden per HMAC-SHA256, Zeitfenster und Nachrichten-ID geprüft.
-- Schreibende API-Aufrufe benötigen eine gültige Bearer-Sitzung und eine erlaubte Origin.
-- Die OBS-URL erlaubt nur das Lesen des Timerzustands. Wer sie kennt, kann den Timer sehen, aber nicht steuern.
+- OBS-Alerts werden kurzzeitig serverseitig gepuffert und nacheinander angezeigt, damit schnelle Ereignisse einander nicht überschreiben.
+- Schreibende API-Aufrufe benötigen eine gültige, zufällige Bearer-Sitzung.
+- Die OBS-URL erlaubt nur das Lesen des Timerzustands. Wer sie kennt, kann den Timer sehen, aber nicht steuern. Ihr Schlüssel steht im URL-Fragment und wird beim Laden der statischen Seite nicht an den Webserver übertragen; die API erhält ihn anschließend in einem eigenen Request-Header.
 - Der persönliche Dashboard-Link ist ein Bearer-Token mit Schreibrechten. Er liegt im URL-Fragment, wird dadurch nicht an WordPress übertragen und wird nach 30 Tagen Inaktivität oder sofort beim Trennen der Twitch-Verbindung ungültig.
 - Die Seite unter `/subathon/` ist nicht verlinkt und mit `noindex` gekennzeichnet. Das ersetzt keine Zugriffskontrolle; geschützt wird das Dashboard durch seinen zufälligen Token.
+- Die Social-Media-Grafik wird ausschließlich lokal im Browser erzeugt; Regelwerte werden dafür nicht an einen Bilddienst übertragen.
 
 ## Umgang mit Zugangsdaten
 
-Niemals `.dev.vars`, Twitch-Secrets, Cloudflare-Tokens, Sitzungslinks oder OBS-URLs committen oder in Screenshots veröffentlichen. Bei Verdacht auf Offenlegung die betroffenen Secrets sofort erneuern und Twitch neu verbinden.
+Niemals Twitch-Secrets, Datenbank-Backups, Sitzungslinks oder OBS-URLs committen oder in Screenshots veröffentlichen. Bei Verdacht auf Offenlegung die betroffenen Secrets sofort erneuern und Twitch neu verbinden.
 
 ## Schwachstellen melden
 

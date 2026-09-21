@@ -95,16 +95,43 @@
               <input id="overlayUrl" readonly />
               <button id="copyOverlayButton" type="button">Kopieren</button>
             </div>
-            <p class="microcopy">In OBS als Browserquelle mit 1920 × 220 px einfügen. Dieser Link kann den Timer nicht steuern.</p>
+            <p class="microcopy">In OBS als Browserquelle mit 1920 × 220 px einfügen und für den Alert-Ton „OBS-Audio steuern“ aktivieren. Dieser Link kann den Timer nicht steuern.</p>
           </section>
         </div>
 
         <form id="settingsForm">
+          <section class="sleep-panel panel">
+            <div class="sleep-copy">
+              <p class="eyebrow">SCHLAFMODUS</p>
+              <h2>Pause für den Streamer</h2>
+              <p id="sleepStatus">Der Schlafmodus ist aus.</p>
+            </div>
+            <div class="sleep-options">
+              <label for="sleepAdditionsEnabled">Support während des Schlafs
+                <select id="sleepAdditionsEnabled" name="sleepAdditionsEnabled">
+                  <option value="true">Zeit weiter hinzufügen</option>
+                  <option value="false">Keine Zeit hinzufügen</option>
+                </select>
+              </label>
+              <label for="sleepTimerContinues">Countdown während des Schlafs
+                <select id="sleepTimerContinues" name="sleepTimerContinues">
+                  <option value="true">Timer läuft weiter</option>
+                  <option value="false">Timer wird eingefroren</option>
+                </select>
+              </label>
+              <button class="sleep-button" id="sleepButton" type="button">Schlafmodus aktivieren</button>
+            </div>
+          </section>
+
           <section class="rules-section">
             <div class="section-heading">
               <div><p class="eyebrow">AUTOMATISCHE REGELN</p><h2>Was verlängert den Stream?</h2></div>
-              <button class="primary-button compact" type="submit">Änderungen speichern</button>
+							<div class="section-actions">
+								<button class="secondary-button compact" id="shareImageButton" type="button">Regelgrafik erstellen</button>
+								<button class="primary-button compact" type="submit">Änderungen speichern</button>
+							</div>
             </div>
+            <p class="test-hint">Die Testknöpfe speichern zuerst deine aktuellen Werte, addieren genau diese Zeit und zeigen denselben Alert in OBS wie ein echtes Twitch-Ereignis.</p>
             <div class="rules-grid" id="rulesGrid"></div>
           </section>
 

@@ -212,6 +212,7 @@ async function loadDashboard() {
   $("#dashboardUrl").value = `${appBase}#session=${encodeURIComponent(state.session)}`;
   $("#overlayUrl").value = `${appBase}overlay.html#api=${encodeURIComponent(apiBase)}&key=${encodeURIComponent(data.overlayKey)}`;
   $("#activityUrl").value = `${appBase}activity.html#api=${encodeURIComponent(apiBase)}&key=${encodeURIComponent(data.overlayKey)}`;
+  $("#sleepOverlayUrl").value = `${appBase}sleep.html#api=${encodeURIComponent(apiBase)}&key=${encodeURIComponent(data.overlayKey)}`;
   renderRules(data.config);
   const form = $("#settingsForm");
   form.elements.startHours.value = data.config.startSeconds / 3600;
@@ -528,6 +529,7 @@ async function copySecret(inputSelector, successMessage) {
 $("#copyDashboardButton").addEventListener("click", () => copySecret("#dashboardUrl", "Dashboard-Link kopiert"));
 $("#copyOverlayButton").addEventListener("click", () => copySecret("#overlayUrl", "OBS-Link kopiert"));
 $("#copyActivityButton").addEventListener("click", () => copySecret("#activityUrl", "Aktionsfenster-Link kopiert"));
+$("#copySleepOverlayButton").addEventListener("click", () => copySecret("#sleepOverlayUrl", "Schlaftimer-Link kopiert"));
 
 $("#disconnectButton").addEventListener("click", async () => {
   if (!confirm("Twitch-Verbindung und gespeicherte Tokens entfernen?")) return;

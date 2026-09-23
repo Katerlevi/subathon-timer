@@ -15,6 +15,10 @@ Stand: 23. September 2026
 - Bei ausgeschaltetem Donations-Regler bleiben Verbindung, Zeitregel, Testberechnung und Token-Einstellungen vollständig verborgen.
 - Beim Ausschalten wird der deaktivierte Zustand serverseitig gespeichert, ohne ungespeicherte Eingabefehler aus sichtbaren Feldern zu übernehmen.
 - Die lokale Mock-API unterstützt den Donation-Konfigurationsfluss für reproduzierbare Oberflächentests.
+- Der Schlaftimer besitzt eine eigene, persönliche OBS-Browserquelle und wird in der Haupt-Timerquelle nicht mehr doppelt dargestellt.
+- Die Schlaftimerquelle zeigt nur im aktiven Schlafmodus den verbleibenden Schlaf-Countdown und den vollständigen Zuschauersatz zu Support und Timerverhalten.
+- Die erklärenden Texte in den Timer-Browserquellen sind deutlich größer; die Größe der Zeit bleibt unverändert.
+- Die lokale Mock-API liefert nun auch die serverseitig bestätigte Schlafplanung für den vollständigen OBS-Test.
 
 ## Vor einem echten Subathon noch live zu beweisen
 

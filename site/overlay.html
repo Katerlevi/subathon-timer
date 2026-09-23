@@ -8,22 +8,17 @@
     <meta name="robots" content="noindex, nofollow, noarchive" />
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src https: http://127.0.0.1:*; img-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'none'" />
     <title>Subathon Timer Overlay</title>
-    <link rel="stylesheet" href="overlay.css?v=1.3.2" />
+    <link rel="stylesheet" href="overlay.css?v=1.3.6-rf-large-copy-20260923-1" />
     <script src="config.js?v=1.3.2"></script>
-    <link rel="stylesheet" href="sleep-clock.css?v=1.3.5-rf-combined-20260922-1" />
-    <script src="sleep-clock.js?v=1.3.5-rf-combined-20260922-1"></script>
-    <script src="overlay.js?v=1.3.5-rf-combined-20260922-1" defer></script>
+    <script src="overlay.js?v=1.3.6-rf-large-copy-20260923-1" defer></script>
   </head>
   <body>
     <main class="overlay" id="overlay">
-      <output id="rfSleepDuration" class="rf-sleep-duration" role="timer" aria-label="Verbleibende geplante Schlafzeit" aria-live="off" hidden></output>
       <div class="label"><span></span><b id="channel">SUBATHON</b></div>
       <div class="rf-main-time"><small class="rf-main-timer-label">Subathon-Timer</small><time id="timer">00:00:00</time></div>
 			<div class="event-info">
 				<div class="event" id="event">Timer bereit</div>
 				<div class="schedule-rule" id="scheduleRule">Das Streamende ist offen.</div>
-				<div class="sleep-rule" id="sleepRule" hidden></div>
-
 			</div>
       <section class="alert" id="alert" aria-live="polite">
         <span id="alertType">TWITCH-EVENT</span>

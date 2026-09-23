@@ -11,6 +11,7 @@ Ein sicherer, quelloffener Subathon-Timer für Twitch. Dashboard und OBS-Ansicht
 - Testknopf pro aktivierter Regel mit echter Zeitaddition, Alert-Ton und animierter OBS-Anzeige
 - Separate OBS-Browserquelle für die letzten drei Aktionen mit echter Zeitaddition
 - Schlafmodus mit getrennten Regeln für Zeitaddition und Countdown
+- Separate OBS-Browserquelle für den Schlaftimer mit Schlafzeit und vollständig ausformulierter Support-Regel
 - Vollständig ausformulierter Schlafhinweis in der OBS-Browserquelle, der nach dem Aufwachen automatisch verschwindet
 - Optionaler Streambeginn sowie offenes oder festes spätestes Streamende
 - Wahlweise begrenzte oder offene maximale Timerlaufzeit

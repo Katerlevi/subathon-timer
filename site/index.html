@@ -15,10 +15,10 @@
     <script src="config.js?v=1.3.4"></script>
     <link rel="stylesheet" href="sleep-clock.css?v=1.3.5-rf-combined-20260922-1" />
     <script src="sleep-clock.js?v=1.3.5-rf-combined-20260922-1"></script>
-    <script src="app.js?v=1.3.5-rf-combined-20260922-1" defer></script>
-  <link rel="stylesheet" href="integrations.css?v=1.3.5-rf-donation-ui-20260923-1">
+    <script src="app.js?v=1.3.6-rf-obs-sleep-20260923-1" defer></script>
+  <link rel="stylesheet" href="integrations.css?v=1.3.6-rf-donation-tile-20260923-1">
     <script src="donation-rule.js?v=1.3.5-rf-combined-20260922-1" defer></script>
-    <script src="integrations.js?v=personal2-1.3.5-rf-donation-ui-20260923-1" defer></script>
+    <script src="integrations.js?v=personal2-1.3.6-rf-donation-tile-20260923-1" defer></script>
   </head>
   <body>
     <div class="noise" aria-hidden="true"></div>
@@ -113,6 +113,12 @@
               <button id="copyActivityButton" type="button">Kopieren</button>
             </div>
             <p class="microcopy">Als zweite Browserquelle mit 620 × 360 px einfügen und in OBS rechts neben dem Timer platzieren.</p>
+            <label for="sleepOverlayUrl">Schlaftimer · eigene Browserquelle</label>
+            <div class="copy-field">
+              <input id="sleepOverlayUrl" readonly />
+              <button id="copySleepOverlayButton" type="button">Kopieren</button>
+            </div>
+            <p class="microcopy">Als eigene Browserquelle mit 1100 × 360 px einfügen. Sie erscheint nur bei aktivem Schlafmodus und zeigt Schlafzeit sowie die vollständige Support-Regel.</p>
           </section>
         </div>
 

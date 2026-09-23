@@ -9,7 +9,7 @@ const overlayKey = "overlay_test_token_123456789012345678901234";
 const api = "/wp-json/royal-family-subathon/v1";
 const port = Number(process.env.RFS_MOCK_PORT || 4174);
 const eventStatus = process.env.RFS_MOCK_EVENT_STATUS === "pending" ? "webhook_callback_verification_pending" : "enabled";
-let timer = { running: false, remainingSeconds: 14400, endsAt: 0, lastEvent: null, sleeping: false, sleepStartedAt: 0, alertId: 0, alertLabel: null, alertSeconds: 0, alertCreatedAt: 0 };
+let timer = { running: false, remainingSeconds: 14400, endsAt: 0, lastEvent: null, sleeping: false, sleepStartedAt: 0, sleepDurationSeconds: 0, alertId: 0, alertLabel: null, alertSeconds: 0, alertCreatedAt: 0 };
 let sleepResumeTimer = false;
 let alerts = [];
 let donation = {
@@ -36,6 +36,20 @@ function timerLimit() {
 	return Math.min(maximum, untilEnd);
 }
 
+function timerSnapshot() {
+	const serverNow = Math.floor(Date.now() / 1000);
+	const duration = Number(timer.sleepDurationSeconds || 0);
+	const known = timer.sleeping && timer.sleepStartedAt > 0 && duration > 0;
+	const sleepEndsAt = known ? timer.sleepStartedAt + duration : 0;
+	return {
+		...timer,
+		serverNow,
+		sleepEndsAt,
+		sleepRemainingSeconds: known ? Math.max(0, sleepEndsAt - serverNow) : null,
+		sleepPlanKnown: Boolean(known),
+	};
+}
+
 async function body(request) {
   let value = "";
   for await (const chunk of request) value += chunk;
@@ -53,10 +67,10 @@ createServer(async (request, response) => {
     if (url.pathname === `${api}/overlay/state`) {
       if (request.headers["x-rfs-overlay-key"] !== overlayKey) return json(response, 404, { message: "OBS-Link ungültig." });
 			const after = Number(url.searchParams.get("after") || 0);
-			return json(response, 200, { ...timer, channel: "testkanal", sleepAdditionsEnabled: config.sleepAdditionsEnabled, sleepTimerContinues: config.sleepTimerContinues, streamStartAt: config.streamStartAt, endMode: config.endMode, streamEndAt: config.streamEndAt, alerts: alerts.filter((alert) => alert.id > after), recentActions: alerts.filter((alert) => alert.seconds > 0).slice(-3).reverse() });
+			return json(response, 200, { ...timerSnapshot(), channel: "testkanal", sleepAdditionsEnabled: config.sleepAdditionsEnabled, sleepTimerContinues: config.sleepTimerContinues, streamStartAt: config.streamStartAt, endMode: config.endMode, streamEndAt: config.streamEndAt, alerts: alerts.filter((alert) => alert.id > after), recentActions: alerts.filter((alert) => alert.seconds > 0).slice(-3).reverse() });
     }
     if (request.headers.authorization !== `Bearer ${session}`) return json(response, 401, { message: "Sitzung abgelaufen." });
-    if (url.pathname === `${api}/me`) return json(response, 200, { streamer: { login: "testkanal", displayName: "Testkanal", setupStatus: "ready" }, config, timer, overlayKey });
+    if (url.pathname === `${api}/me`) return json(response, 200, { streamer: { login: "testkanal", displayName: "Testkanal", setupStatus: "ready" }, config, timer: timerSnapshot(), overlayKey });
 		if (url.pathname === `${api}/events/refresh` && request.method === "POST") return json(response, 200, { ok: true, message: "Twitch-Ereignisse angefordert. Die Aktivierung kann kurz dauern." });
 		if (url.pathname === `${api}/events/status`) return json(response, 200, {
 			subscribe: eventStatus, resub: eventStatus, gift: eventStatus, cheer: eventStatus,
@@ -115,8 +129,12 @@ createServer(async (request, response) => {
 		}
 		if (url.pathname === `${api}/sleep/start`) {
 			if (!timer.sleeping) {
+				const input = await body(request);
+				const duration = Number(input.durationSeconds);
+				if (!Number.isSafeInteger(duration) || duration < 1 || duration > 2592000) return json(response, 400, { message: "Bitte eine gültige Schlafdauer eingeben." });
 				timer.sleeping = true;
 				timer.sleepStartedAt = Math.floor(Date.now() / 1000);
+				timer.sleepDurationSeconds = duration;
 				if (!config.sleepTimerContinues && timer.running) {
 					timer.remainingSeconds = Math.max(0, timer.endsAt - Math.floor(Date.now() / 1000));
 					timer.running = false;
@@ -124,7 +142,7 @@ createServer(async (request, response) => {
 					sleepResumeTimer = true;
 				}
 			}
-			return json(response, 200, { timer });
+			return json(response, 200, { timer: timerSnapshot() });
 		}
 		if (url.pathname === `${api}/sleep/end`) {
 			timer.sleeping = false;
@@ -135,7 +153,7 @@ createServer(async (request, response) => {
 				timer.endsAt = Math.floor(Date.now() / 1000) + timer.remainingSeconds;
 			}
 			sleepResumeTimer = false;
-			return json(response, 200, { timer });
+			return json(response, 200, { timer: timerSnapshot() });
 		}
     if (url.pathname === `${api}/timer/start`) {
 			timer.remainingSeconds = Math.min(timerLimit(), timer.remainingSeconds);

@@ -30,6 +30,7 @@
     const enabled=q('#rfDonationEnabled').checked;
     q('#rfDonationSettings').hidden=!enabled;
     q('#rfDonationOffNote').hidden=enabled;
+    q('.rf-donation-module').classList.toggle('is-enabled',enabled);
   }
   function displayRule(r){
     revision=r.revision;
@@ -50,6 +51,13 @@
   async function saveDonationRule(enabled=q('#rfDonationEnabled').checked,useSaved=false){
     const r=await request('/donations/config','PUT',donationPayload(enabled,useSaved));displayRule(r);return r;
   }
+  async function disableDonationRule(){
+    // Always disable against the newest server revision. This prevents a stale
+    // dashboard tab from snapping the switch back on after another save.
+    const latest=await request('/donations/config');
+    const payload={rule:RFDonationRule.rule({...latest.rule,enabled:false}),revision:latest.revision,tip_url:latest.tip_url||''};
+    const r=await request('/donations/config','PUT',payload);displayRule(r);return r;
+  }
   async function load(){
     const [r,s,m]=await Promise.all([request('/donations/config'),request('/donations/status'),request('/media/control')]);displayRule(r);mediaRevision=m.revision;
     q('#rfConnectSE').disabled=!s.oauth_application_configured;
@@ -65,9 +73,8 @@
     const dash=q('#dashboard');if(mounted||!dash||dash.hidden)return;mounted=true;
     const panel=document.createElement('section');panel.id='rfIntegrations';panel.className='panel rf-integrations';
     panel.innerHTML=`<div class="rf-tools-head"><div><p class="eyebrow">ROYAL FAMILY TOOLS</p><h2>Verbindungen & Medien</h2></div><p>Diese Einstellungen gelten ausschließlich für deinen angemeldeten Twitch-Kanal.</p></div>
-      <section class="rf-tool-card rf-donation-card" aria-labelledby="rfDonationTitle"><fieldset id="rfDonationPanelFields" disabled>
-      <div class="rf-donation-toggle"><div class="rf-donation-title"><span class="rf-tool-icon" aria-hidden="true">€</span><div class="rf-donation-copy"><p class="eyebrow">DONATION-TRACKER</p><h3 id="rfDonationTitle">Support über StreamElements</h3><p>Donations automatisch in zusätzliche Streamzeit umrechnen.</p></div></div><label class="switch rf-donation-switch" aria-label="Donations aktivieren"><input id="rfDonationEnabled" type="checkbox"><span></span></label></div>
-      <p class="rf-donation-off-note" id="rfDonationOffNote">Aktiviere Donations, um Verbindung, Zeitregel und Testberechnung einzurichten.</p>
+      <section class="rf-donation-module" aria-labelledby="rfDonationTitle"><fieldset id="rfDonationPanelFields" disabled><div class="rf-donation-layout">
+      <article class="rule-card rf-donation-card" style="--rule-color:#7cff4f"><header><span class="rule-icon" aria-hidden="true">€</span><label class="switch" aria-label="Donations aktivieren"><input id="rfDonationEnabled" type="checkbox"><span></span></label></header><h3 id="rfDonationTitle">Donation</h3><p>Support über StreamElements</p><div class="rf-donation-card-status" id="rfDonationOffNote">Ausgeschaltet · Einstellungen verborgen</div></article>
       <div class="rf-donation-settings" id="rfDonationSettings" hidden>
       <div class="rf-status-card"><p id="rfSEStatus" role="status">StreamElements-Verbindung wird geprüft …</p><p id="rfCreditStatus" role="status">Live-Zustellung noch nicht geprüft.</p></div>
       <div class="rf-provider-actions"><button id="rfConnectSE" type="button" class="secondary-button" disabled>StreamElements verbinden</button><button id="rfDisconnectSE" type="button" class="ghost-button">Nur StreamElements trennen</button></div>
@@ -80,7 +87,7 @@
       <div class="rf-integration-grid"><label>Bezugsbetrag in Euro<input id="rfDonationBase" inputmode="decimal" value="5,00" required></label><label>Minuten je Bezugsbetrag<input id="rfDonationMinutes" inputmode="decimal" value="10" required></label></div>
       <p class="rf-help">Anteilig in Cents; Bruchteile einer Sekunde werden je Donation abgerundet. Andere Währungen werden nicht umgerechnet.</p><div class="rf-form-actions"><button class="primary-button" type="submit">Donation-Regel speichern</button></div></form>
       <div class="rf-preview-card"><label>Testbetrag in Euro<input id="rfDonationPreview" inputmode="decimal" value="7,50"></label><button id="rfPreviewButton" class="secondary-button" type="button">Berechnen — ohne Zeitgutschrift</button><output id="rfDonationResult"></output></div>
-      </div></fieldset></section>
+      </div></div></fieldset></section>
       <section class="rf-tool-card rf-media-card"><details><summary>Optional: eigene Clip-Browserquelle</summary><p>Nur von dir ausgewählte Twitch-Clips. Der Wechsel erfolgt nach deiner eingestellten Anzeigedauer, nicht nach einem behaupteten Player-Endsignal.</p><form id="rfMediaForm"><label>Twitch-Clip oder Clip-ID<input id="rfClip" type="text" maxlength="300" required></label><label>Anzeigedauer in Sekunden<input id="rfClipDuration" type="number" min="1" max="300" step="1" value="60" required></label><label><input id="rfClipMuted" type="checkbox" checked> Stumm starten</label><button type="submit" class="secondary-button">Clip anzeigen</button> <button type="button" id="rfStopClip" class="ghost-button">Clip stoppen</button></form><label>OBS-Link — nur lesend, mindestens 400 × 300<input id="rfMediaURL" readonly></label><p>Ein blockierter Player beeinflusst weder Timer noch Donations. Für Ton ggf. OBS-Interaktion erforderlich.</p></details></section><p id="rfIntegrationMessage" role="status"></p>`;
     dash.append(panel);
     q('#rfPersonalForm').addEventListener('submit',ev=>{ev.preventDefault();busy(ev.submitter,async()=>{
@@ -92,7 +99,7 @@
     });});
     q('#rfDonationEnabled').addEventListener('change',ev=>{
       const toggle=ev.currentTarget;syncDonationVisibility();if(toggle.checked){message('Donation-Einstellungen geöffnet. Speichere die Regel nach deiner Einrichtung.');return;}
-      busy(toggle,async()=>{try{await saveDonationRule(false,true);message('Donation-Tracker deaktiviert.');}catch(error){toggle.checked=true;syncDonationVisibility();throw error;}});
+      busy(toggle,async()=>{try{await disableDonationRule();message('Donation-Tracker deaktiviert.');}catch(error){toggle.checked=true;syncDonationVisibility();throw error;}});
     });
     q('#rfDonationForm').addEventListener('submit',ev=>{ev.preventDefault();busy(ev.submitter,async()=>{await saveDonationRule();message('Deine Donation-Regel wurde serverseitig gespeichert.');});});
     q('#rfPreviewButton').addEventListener('click',ev=>busy(ev.currentTarget,async()=>{const r=await request('/donations/preview','POST',{amount_minor:RFDonationRule.parseEuroAmount(q('#rfDonationPreview').value),currency:'EUR'});q('#rfDonationResult').textContent=`${Math.floor(r.seconds/60)} Min. ${r.seconds%60} Sek. — reine Vorschau der gespeicherten Regel.`;}));

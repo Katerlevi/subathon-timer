@@ -83,7 +83,6 @@ function enqueueAlerts(alerts) {
 function render() {
   const value = remaining();
   document.querySelector("#timer").textContent = formatTime(value);
-  if (globalThis.RFSleepClock) RFSleepClock.render(snapshot, "#rfSleepDuration");
   document.querySelector("#overlay").classList.toggle("ended", value <= 0);
 	document.querySelector("#overlay").classList.toggle("sleeping", Boolean(snapshot.sleeping));
 }
@@ -99,23 +98,11 @@ async function refresh() {
     if (!response.ok) throw new Error("Overlay nicht gefunden");
 		const incoming = await response.json();
 		snapshot = incoming;
-    if(globalThis.RFSleepClock)RFSleepClock.accept(incoming);
     document.querySelector("#channel").textContent = snapshot.channel ? `${snapshot.channel.toUpperCase()} · SUBATHON` : "SUBATHON";
 		document.querySelector("#event").textContent = snapshot.sleeping ? "Streamer schläft" : (snapshot.lastEvent || (snapshot.running ? "Timer läuft" : "Timer bereit"));
 		const startText = snapshot.streamStartAt ? `Start am ${formatScheduleDate(snapshot.streamStartAt)}.` : "";
 		const endText = snapshot.endMode === "fixed" && snapshot.streamEndAt ? `Spätestes Ende am ${formatScheduleDate(snapshot.streamEndAt)}.` : "Das Streamende ist offen.";
 		document.querySelector("#scheduleRule").textContent = `${startText} ${endText}`.trim();
-		const sleepRule = document.querySelector("#sleepRule");
-		sleepRule.hidden = !snapshot.sleeping;
-		if (snapshot.sleeping) {
-			const additions = snapshot.sleepAdditionsEnabled
-				? "Support wird weiterhin zum Timer addiert"
-				: "Support wird währenddessen nicht zum Timer addiert";
-			const countdown = snapshot.sleepTimerContinues
-				? "der Countdown läuft währenddessen weiter"
-				: "der Countdown ist währenddessen angehalten";
-			sleepRule.textContent = `Schlafmodus aktiv: ${additions} und ${countdown}.`;
-		}
 		enqueueAlerts(snapshot.alerts);
     render();
   } catch { document.querySelector("#event").textContent = "Verbindung wird wiederhergestellt …"; }

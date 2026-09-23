@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="referrer" content="no-referrer" />
+    <meta name="robots" content="noindex, nofollow, noarchive" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src https: http://127.0.0.1:*; img-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'none'" />
+    <title>Subathon · Schlaftimer</title>
+    <link rel="stylesheet" href="sleep.css?v=1.3.6-rf-20260923-1" />
+    <script src="config.js?v=1.3.2"></script>
+    <script src="sleep-clock.js?v=1.3.6-rf-20260923-1"></script>
+    <script src="sleep.js?v=1.3.6-rf-20260923-1" defer></script>
+  </head>
+  <body>
+    <main class="sleep-overlay" id="sleepOverlay" hidden>
+      <header><span class="pulse"></span><div><small>SCHLAFMODUS</small><h1 id="sleepTitle">Der Streamer schläft</h1></div></header>
+      <section class="sleep-clock-panel">
+        <p class="sleep-label" id="sleepLabel">Noch geplante Schlafzeit</p>
+        <output id="sleepTimer" role="timer" aria-live="off">00:00:00</output>
+      </section>
+      <p class="sleep-rule" id="sleepRule"></p>
+      <p class="connection-state" id="sleepConnection" role="status"></p>
+    </main>
+  </body>
+</html>

@@ -4,16 +4,12 @@
 .rf-tools-head > p { max-width:430px; margin:0; color:var(--muted); font-size:13px; text-align:right; }
 .rf-tool-card { position:relative; margin:18px; border:1px solid var(--line); border-radius:14px; background:#0e131b; overflow:hidden; }
 .rf-tool-card:before { content:""; position:absolute; inset:0 auto 0 0; width:2px; background:var(--cyan); opacity:.75; }
-.rf-donation-card:before { background:var(--lime); }
-.rf-donation-toggle { display:flex; align-items:flex-start; justify-content:space-between; gap:22px; padding:22px; }
-.rf-donation-title { display:flex; align-items:flex-start; gap:15px; }
-.rf-tool-icon { width:38px; height:38px; flex:0 0 38px; display:grid; place-items:center; border:1px solid #334054; border-radius:10px; color:var(--lime); font:700 16px DM Mono,monospace; }
-.rf-donation-copy .eyebrow { margin:1px 0 9px; }
-.rf-donation-copy h3 { margin:0; font-size:20px; }
-.rf-donation-copy p:last-child { margin:7px 0 0; color:#7f8b9d; font-size:13px; }
-.rf-donation-switch { flex:0 0 40px; margin:7px 0 0 !important; }
-.rf-donation-off-note { margin:0; padding:0 22px 22px 75px; color:#7f8b9d; font-size:13px; }
-.rf-donation-settings { padding:22px; border-top:1px solid #242d3a; background:linear-gradient(145deg,rgb(20 26 36 / 70%),rgb(13 17 24 / 80%)); }
+.rf-donation-module { margin:18px; }
+.rf-donation-layout { display:grid; grid-template-columns:minmax(0,280px); gap:18px; align-items:start; }
+.rf-donation-module.is-enabled .rf-donation-layout { grid-template-columns:minmax(220px,280px) minmax(0,1fr); }
+.rf-donation-card { min-height:242px; margin:0; }
+.rf-donation-card-status { margin-top:25px; padding-top:14px; border-top:1px solid #242d3a; color:#8b96a7; font-size:12px; font-weight:700; }
+.rf-donation-settings { min-width:0; padding:22px; border:1px solid var(--line); border-radius:14px; background:linear-gradient(145deg,rgb(20 26 36 / 70%),rgb(13 17 24 / 80%)); }
 .rf-status-card { display:grid; gap:6px; margin-bottom:18px; padding:14px 16px; border:1px solid #2d394a; border-radius:10px; background:#0a0e14; }
 .rf-status-card p { margin:0; color:#aab4c3; font-size:13px; }
 .rf-provider-actions, .rf-form-actions { display:flex; flex-wrap:wrap; gap:10px; }
@@ -44,7 +40,7 @@
 @media(max-width:760px){
   .rf-tools-head { align-items:stretch; flex-direction:column; padding:24px 22px; }
   .rf-tools-head > p { text-align:left; }
-  .rf-donation-off-note { padding-left:22px; }
+  .rf-donation-module.is-enabled .rf-donation-layout { grid-template-columns:1fr; }
   .rf-integration-grid, .rf-preview-card { grid-template-columns:1fr; }
   .rf-preview-card button { width:100%; min-width:0; }
 }

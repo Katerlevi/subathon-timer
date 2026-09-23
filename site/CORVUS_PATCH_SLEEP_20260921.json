@@ -1,0 +1,97 @@
+{
+  "schema_version": 1,
+  "patch_id": "RF_SUBATHON_SLEEP_DISPLAY_20260921_001",
+  "state": "DEPLOYED_BYTE_VERIFIED",
+  "scope": "Elapsed sleep display only; no backend or donation changes",
+  "base_author": "Levi",
+  "base_backend_version": "1.3.4",
+  "requires_patch": "RF_SUBATHON_TEST_ALERT_LABELS_20260921_001",
+  "files": [
+    {
+      "path": "app.js",
+      "before_sha256": "240c3ae00c7adde3871f4e8b56695c8734777684f78d413ea136be0d3c9e77c9",
+      "after_sha256": "2be681b982c7f5830d1ea146a1f3766caff293dc29612339f4d34437f9045924",
+      "bytes": 24674
+    },
+    {
+      "path": "index.html",
+      "before_sha256": "c690d649b4546208d0eb633af5ae2b7ee72aaa00a33f35a1ca6cd3f5b3e36d8b",
+      "after_sha256": "c8b5fa323a6f0f08b83871e477f729116c5aae6cb32c463ae8418769659667ae",
+      "bytes": 10677
+    },
+    {
+      "path": "overlay.html",
+      "before_sha256": "85ad08692b233367ca0bd906e00a9573a60121d6016ee8f4e13b5f9f4850af69",
+      "after_sha256": "181f49c6a0011a5e18c7c1754db518c475c59fa4ab3bb45f92839201638eafa4",
+      "bytes": 1685
+    },
+    {
+      "path": "overlay.js",
+      "before_sha256": "90a1c66540591b99a82a3edbee662934440dd7245aac57dd40f01667f2ff715c",
+      "after_sha256": "9b57c068a13afe515a1dc62c94476f08a3900d9c342684789c83afa2a0b97920",
+      "bytes": 5356
+    },
+    {
+      "path": "sleep-clock.css",
+      "before_sha256": null,
+      "after_sha256": "63bd5abf68dca42e7ee9550f721f116c88bba62133c9e5f78e20dd6eeab3f87e",
+      "bytes": 659
+    },
+    {
+      "path": "sleep-clock.js",
+      "before_sha256": null,
+      "after_sha256": "f6e93a65038a8813def44244354bc8ac4cfe4551b9f742281201db9dc6a4b1f8",
+      "bytes": 1546
+    }
+  ],
+  "new_backup_sha256": "b6fdbddf5f1472b17473bb6641e782ff87c598a63c756b4a48caa53b8cb4ed07",
+  "backup_scope": "public frontend snapshot before sleep-only patch; NOT backend or database",
+  "previous_original_backups": "Preserved; not re-accessed",
+  "apply_order": [
+    "sleep-clock.js",
+    "sleep-clock.css",
+    "app.js",
+    "overlay.js",
+    "index.html",
+    "overlay.html"
+  ],
+  "rollback_order": [
+    "index.html",
+    "overlay.html",
+    "app.js",
+    "overlay.js"
+  ],
+  "rollback_archive": "before-sleep-current-frontend.zip",
+  "mixed_cache_safety": "Updated app/overlay scripts tolerate absent sleep module; use exact new asset URLs. Reload existing HTML/OBS explicitly.",
+  "do_not_modify": [
+    "CORVUS_PATCH.json",
+    "PHP plugin",
+    "database",
+    "Twitch subscriptions",
+    "firewall",
+    "timer arithmetic",
+    "donation configuration"
+  ],
+  "clock_basis": "Existing sleepStartedAt Unix seconds and client clock; invalid/future values show unknown",
+  "next_required": "Do not reapply. Verify after hashes when integrating into Levi source; preserve the Test-Alert fix. Actual OBS application/streamer acceptance remains untested; donations and Twitch transport are separate work.",
+  "layout_fix": "Additional clock caused 222.36px total height at 1920x220; sleeping-only vertical padding reduced by 6px per side. Full policy text retained.",
+  "tested_at_utc": "2026-09-21T15:45:02.829Z",
+  "browser_tests": {
+    "passed": 19,
+    "failed": 0,
+    "runtime": "Native Chrome on CORVUS-TALOS",
+    "api": "SYNTHETIC_ONLY",
+    "obs_actual": false,
+    "viewport_overlay": [
+      1920,
+      220
+    ],
+    "dashboard_widths": [
+      1365,
+      390
+    ]
+  },
+  "deployment_receipt": "DEPLOYMENT_SLEEP_RECEIPT.json in the separate Codex handoff and native TALOS evidence directory; not stored with restricted data.",
+  "codex_instruction": "Preserve earlier CORVUS_PATCH.json. Check before/after hashes: apply only to matching before state, skip after state, STOP on any other state. Use fresh frontend backup for rollback; do not restore older app.js over the Test-Alert fix.",
+  "verified_at_utc": "2026-09-21T15:51:33.572304+00:00"
+}

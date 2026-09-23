@@ -1,10 +1,10 @@
 # Einrichtung
 
-## 1. WordPress-Plugin installieren
+## 1. WordPress-Plugins installieren
 
 Den Ordner `wordpress/royal-family-subathon` als ZIP packen und in WordPress unter **Plugins > Installieren > Plugin hochladen** installieren und aktivieren. Bei der Aktivierung werden ausschließlich eigene Tabellen mit dem Präfix `rfs_` angelegt.
 
-Das Plugin verändert weder das aktive Theme noch Menüs oder bestehende Seiten.
+Für Donations, geplanten Schlaf und die optionale Medienquelle anschließend auch `wordpress/royal-family-streamertools` als eigenes ZIP installieren und aktivieren. Das Ergänzungsplugin benötigt das aktive Basisplugin. Beide Plugins verändern weder das aktive Theme noch Menüs oder bestehende Seiten.
 
 ## 2. Twitch-Anwendung anlegen
 
@@ -40,6 +40,20 @@ Vor dem ersten echten Stream:
 6. Die Social-Media-Regelgrafik erzeugen und inhaltlich prüfen.
 7. Im Dashboard prüfen, ob **8 von 8 Twitch-Ereignissen aktiv** angezeigt werden und beide Kanalpunkte-Abos als aktiv erscheinen. Bei ausstehender oder fehlgeschlagener Webhook-Bestätigung ist die Anmeldung noch nicht erfolgreich, auch wenn der Twitch-Login geklappt hat. Erst nach Beseitigung des Zustellproblems **Twitch-Ereignisse aktualisieren** wählen und den Status erneut prüfen. Eine eigene und eine automatische Kanalpunkt-Belohnung tatsächlich einlösen; erst das prüft die Twitch-Verbindung Ende zu Ende. Zusätzlich Sub-, Bits- und Follow-Ereignisse testen.
 8. Danach die echten Minutenwerte, den Zeitplan und das Zeitlimit festlegen.
+
+## 6. Donations einrichten und prüfen
+
+Die Donation-Einstellungen werden erst angezeigt, wenn **Donations aktivieren** eingeschaltet ist. Danach StreamElements verbinden, den öffentlichen Tipping-Link sowie Bezugsbetrag und Minuten eintragen und die Regel speichern.
+
+Die Schaltfläche **Berechnen — ohne Zeitgutschrift** prüft nur die gespeicherte Rechenregel. Vor dem Livebetrieb muss zusätzlich eine echte Test-Donation über das verbundene StreamElements-Konto eingehen. Dabei kontrollieren:
+
+1. Das Ereignis gehört zum angemeldeten Twitch-/StreamElements-Kanal.
+2. Es wird genau einmal verarbeitet.
+3. Der berechnete Betrag fügt genau die erwartete Zeit hinzu.
+4. OBS zeigt den passenden Alert und den Eintrag im Aktionsfenster.
+5. Das Dashboard behauptet erst nach bestätigter Zustellung, dass Live-Gutschriften freigegeben sind.
+
+Beim Ausschalten des Reglers wird die Donation-Regel serverseitig deaktiviert und der gesamte Einstellungsbereich verborgen. Bereits gespeicherte Werte bleiben für eine spätere Reaktivierung erhalten.
 
 Die Oberfläche allein beweist noch nicht, dass echte Twitch-Events ankommen. Das muss nach dem Eintragen der Twitch-Anwendung einmal live geprüft werden.
 

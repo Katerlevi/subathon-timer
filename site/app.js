@@ -73,6 +73,7 @@ function renderTimer() {
   const formatted = formatTime(currentRemaining());
   $("#timerDisplay").textContent = formatted;
   $("#miniTimer").textContent = formatted;
+  if (globalThis.RFSleepClock) RFSleepClock.render(state.timer, "#rfSleepDuration");
 	const sleeping = Boolean(state.timer?.sleeping);
   const running = Boolean(state.timer?.running && currentRemaining() > 0);
   $("#timerStatus").classList.toggle("active", running);
@@ -93,6 +94,7 @@ function renderSleep() {
 	$("#sleepButton").classList.toggle("active", sleeping);
 	$("#sleepAdditionsEnabled").disabled = sleeping;
 	$("#sleepTimerContinues").disabled = sleeping;
+  for(const id of ["rfSleepHours","rfSleepMinutes","rfSleepSeconds"])$("#"+id).disabled=sleeping;
 }
 
 function renderSchedule() {
@@ -115,6 +117,7 @@ function renderMaximumTime() {
 
 function applyTimer(timer) {
 	state.timer = timer;
+  if(globalThis.RFSleepClock)RFSleepClock.accept(timer);
 	$("#lastEvent").textContent = timer.lastEvent || "Noch kein Event empfangen";
 	renderTimer();
 	renderSleep();
@@ -197,6 +200,9 @@ async function loadDashboard() {
 	state.streamer = data.streamer;
   state.config = data.config;
   state.timer = data.timer;
+  if(globalThis.RFSleepClock)RFSleepClock.accept(data.timer);
+  const planned=Number(data.timer.sleepDurationSeconds)||0;
+  if(planned>0){$("#rfSleepHours").value=Math.floor(planned/3600);$("#rfSleepMinutes").value=Math.floor(planned%3600/60);$("#rfSleepSeconds").value=planned%60;}
   connectView.hidden = true;
   dashboard.hidden = false;
   showEventHealth("Twitch-Ereignisse werden geprüft", false);
@@ -289,6 +295,15 @@ function settingsPayload() {
 async function saveSettings(showConfirmation = true) {
 	const data = await api("/config", { method: "PUT", body: JSON.stringify(settingsPayload()) });
 	state.config = data.config;
+	// Show server-confirmed seconds without replacing the rule cards.
+	// In-flight test buttons must keep their identity and disabled state.
+	for (const rule of rules) {
+		const label = $(`#rulesGrid [data-test-rule="${rule.key}"] span`);
+		if (label) {
+			const seconds = Number(data.config[`${rule.key}Seconds`] ?? rule.defaultMinutes * 60);
+			label.textContent = formatDelta(seconds);
+		}
+	}
 	renderSleep();
 	if (showConfirmation) showToast("Änderungen gespeichert");
 	return data.config;
@@ -362,8 +377,12 @@ $("#sleepButton").addEventListener("click", async () => {
 	const button = $("#sleepButton");
 	button.disabled = true;
 	try {
-		if (action === "start") await saveSettings(false);
-		const data = await api(`/sleep/${action}`, { method: "POST" });
+		let body;
+    if(action==="start"){
+      body=JSON.stringify({durationSeconds:RFSleepClock.readDuration($("#rfSleepHours").value,$("#rfSleepMinutes").value,$("#rfSleepSeconds").value)});
+      await saveSettings(false);
+    }
+    const data=await api(`/sleep/${action}`,{method:"POST",...(body?{body}:{})});
 		applyTimer(data.timer);
 		showToast(action === "start" ? "Schlafmodus aktiviert" : "Schlafmodus beendet");
 	} catch (error) {

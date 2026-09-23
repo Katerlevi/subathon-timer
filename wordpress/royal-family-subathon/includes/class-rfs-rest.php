@@ -343,26 +343,33 @@ final class RFS_REST {
 		}
 
 		global $wpdb;
-		$inserted = $wpdb->query( $wpdb->prepare( 'INSERT IGNORE INTO ' . RFS_DB::table( 'event_dedupe' ) . ' (message_id, received_at) VALUES (%s, %d)', $message_id, time() ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		if ( 1 !== $inserted ) {
-			return self::response( null, 204 );
+		if ( false === $wpdb->query( 'START TRANSACTION' ) ) {
+			return self::error( 'event_processing_failed', 'Twitch-Ereignis konnte nicht gespeichert werden.', 503 );
 		}
-
-		$type  = (string) ( $payload['subscription']['type'] ?? '' );
-		$event = (array) ( $payload['event'] ?? array() );
-		$broadcaster_id = RFS_Core::broadcaster_id_from_event( $type, $event );
-		$streamer = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . RFS_DB::table( 'streamers' ) . ' WHERE twitch_user_id = %s AND active = 1 LIMIT 1', $broadcaster_id ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-		if ( ! $streamer ) {
-			return self::response( null, 204 );
+		try {
+			$inserted = $wpdb->query( $wpdb->prepare( 'INSERT IGNORE INTO ' . RFS_DB::table( 'event_dedupe' ) . ' (message_id, received_at) VALUES (%s, %d)', $message_id, time() ) );
+			if ( false === $inserted ) { throw new RuntimeException( 'Event receipt failed.' ); }
+			if ( 1 === $inserted ) {
+				$type = (string) ( $payload['subscription']['type'] ?? '' );
+				$event = (array) ( $payload['event'] ?? array() );
+				$broadcaster_id = RFS_Core::broadcaster_id_from_event( $type, $event );
+				$streamer = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . RFS_DB::table( 'streamers' ) . ' WHERE twitch_user_id = %s AND active = 1 LIMIT 1', $broadcaster_id ), ARRAY_A );
+				if ( $wpdb->last_error ) { throw new RuntimeException( 'Event owner lookup failed.' ); }
+				if ( $streamer ) {
+					$config = self::config_for( (string) $streamer['id'] );
+					if ( $wpdb->last_error ) { throw new RuntimeException( 'Event config lookup failed.' ); }
+					$result = RFS_Core::compute_event_delta( $type, $event, $config );
+					if ( ! empty( $result['enabled'] ) ) {
+						self::apply_adjustment( (string) $streamer['id'], (int) $result['seconds'], (string) $result['label'], true, $config['sleepAdditionsEnabled'], false );
+					}
+				}
+			}
+			if ( false === $wpdb->query( 'COMMIT' ) ) { throw new RuntimeException( 'Event commit failed.' ); }
+		} catch ( Throwable $error ) {
+			$wpdb->query( 'ROLLBACK' );
+			return self::error( 'event_processing_failed', 'Twitch-Ereignis konnte nicht gespeichert werden.', 503 );
 		}
-		$config = self::config_for( (string) $streamer['id'] );
-		$result = RFS_Core::compute_event_delta( $type, $event, $config );
-		if ( ! empty( $result['enabled'] ) ) {
-			self::apply_adjustment( (string) $streamer['id'], (int) $result['seconds'], (string) $result['label'], true, $config['sleepAdditionsEnabled'] );
-		}
-		if ( random_int( 1, 100 ) <= 5 ) {
-			self::cleanup();
-		}
+		try { if ( random_int( 1, 100 ) <= 5 ) { self::cleanup(); } } catch ( Throwable $ignored ) {}
 		return self::response( null, 204 );
 	}
 
@@ -581,6 +588,17 @@ final class RFS_REST {
 	}
 
 	public static function sleep_action( WP_REST_Request $request ) {
+        $duration_seconds = 0;
+        if ( 'start' === $request->get_param( 'action' ) ) {
+            if ( strlen( (string) $request->get_body() ) > self::MAX_JSON_BYTES ) return self::error( 'payload_too_large', 'Anfrage zu groß.', 413 );
+            try {
+                $input = json_decode( $request->get_body(), true, 32, JSON_THROW_ON_ERROR );
+                if ( ! is_array($input) || array_diff(array_keys($input), array('durationSeconds')) ) throw new InvalidArgumentException('Ungültige Schlafplanung.');
+                $duration_seconds = RFS_Planned_Sleep::validate_seconds( $input['durationSeconds'] ?? null );
+            } catch ( InvalidArgumentException | JsonException $error ) {
+                return self::error( 'invalid_sleep_duration', 'Bitte eine gültige Schlafdauer eingeben.', 400 );
+            }
+        }
 		$streamer = (array) $request->get_param( '_rfs_auth' );
 		$id       = (string) $streamer['id'];
 		$action   = (string) $request->get_param( 'action' );
@@ -593,7 +611,7 @@ final class RFS_REST {
 			$now = time();
 			$current = RFS_Core::timer_from_row( (array) $row );
 			if ( 'start' === $action && empty( $row['sleeping'] ) ) {
-				$data = array( 'sleeping' => 1, 'sleep_started_at' => $now, 'sleep_resume_timer' => 0, 'updated_at' => $now );
+				$data = array( 'sleeping' => 1, 'sleep_started_at' => $now, 'sleep_duration_seconds' => $duration_seconds, 'sleep_resume_timer' => 0, 'updated_at' => $now );
 				if ( empty( $config['sleepTimerContinues'] ) && ! empty( $current['running'] ) ) {
 					$data['running'] = 0;
 					$data['remaining_seconds'] = (int) $current['remainingSeconds'];
@@ -726,16 +744,17 @@ final class RFS_REST {
 		$wpdb->query( $wpdb->prepare( 'INSERT IGNORE INTO ' . RFS_DB::table( 'timer_states' ) . ' (streamer_id, updated_at) VALUES (%s, %d)', $streamer_id, $now ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 	}
 
-	private static function apply_adjustment( string $streamer_id, int $seconds, string $label, bool $show_alert = false, ?bool $sleep_additions_enabled = null ): array {
+	private static function apply_adjustment( string $streamer_id, int $seconds, string $label, bool $show_alert = false, ?bool $sleep_additions_enabled = null, bool $manage_transaction = true ): array {
 		global $wpdb;
 		$config = self::config_for( $streamer_id );
-		$wpdb->query( 'START TRANSACTION' );
+		if ( $manage_transaction ) { if ( false === $wpdb->query( 'START TRANSACTION' ) ) { throw new RuntimeException( 'Timer transaction failed.' ); } }
 		try {
 			$row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . RFS_DB::table( 'timer_states' ) . ' WHERE streamer_id = %s FOR UPDATE', $streamer_id ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 			if ( ! $row ) {
 				self::create_defaults( $streamer_id, time() );
 				$row = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . RFS_DB::table( 'timer_states' ) . ' WHERE streamer_id = %s FOR UPDATE', $streamer_id ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
 			}
+			if ( ! $row || $wpdb->last_error ) { throw new RuntimeException( 'Timer read failed.' ); }
 			if ( null !== $sleep_additions_enabled && ! $sleep_additions_enabled && ! empty( $row['sleeping'] ) ) {
 				$seconds = 0;
 				if ( false === strpos( $label, 'im Schlafmodus nicht addiert' ) ) {
@@ -776,10 +795,10 @@ final class RFS_REST {
 					throw new RuntimeException( 'Alert konnte nicht gespeichert werden.' );
 				}
 			}
-			$wpdb->query( 'COMMIT' );
+			if ( $manage_transaction ) { if ( false === $wpdb->query( 'COMMIT' ) ) { throw new RuntimeException( 'Timer transaction failed.' ); } }
 			return RFS_Core::timer_from_row( array_merge( (array) $row, $data ) );
 		} catch ( Throwable $error ) {
-			$wpdb->query( 'ROLLBACK' );
+			if ( $manage_transaction ) { $wpdb->query( 'ROLLBACK' ); }
 			throw $error;
 		}
 	}

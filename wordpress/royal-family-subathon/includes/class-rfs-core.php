@@ -142,7 +142,7 @@ final class RFS_Core {
 		if ( $running && 0 === $remaining ) {
 			$running = false;
 		}
-		return array(
+		$fields = array(
 			'running'          => $running,
 			'remainingSeconds' => $remaining,
 			'endsAt'           => $running ? $ends_at : 0,
@@ -154,6 +154,7 @@ final class RFS_Core {
 			'alertSeconds'     => (int) ( $row['alert_seconds'] ?? 0 ),
 			'alertCreatedAt'   => (int) ( $row['alert_created_at'] ?? 0 ),
 		);
+		return array_merge( $fields, RFS_Planned_Sleep::fields( $row, time() ) );
 	}
 
 	private static function rule_result( string $key, array $config, string $label ): array {

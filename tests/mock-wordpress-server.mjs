@@ -12,6 +12,11 @@ const eventStatus = process.env.RFS_MOCK_EVENT_STATUS === "pending" ? "webhook_c
 let timer = { running: false, remainingSeconds: 14400, endsAt: 0, lastEvent: null, sleeping: false, sleepStartedAt: 0, alertId: 0, alertLabel: null, alertSeconds: 0, alertCreatedAt: 0 };
 let sleepResumeTimer = false;
 let alerts = [];
+let donation = {
+	rule: { enabled: process.env.RFS_MOCK_DONATIONS === "enabled", currency: "EUR", base_amount_minor: 500, seconds_per_base: 600, mode: "proportional", rounding: "floor_per_tip" },
+	revision: 1, credit_from_ms: 0, tip_url: "", tip_url_verification: "format_only_not_authorization",
+};
+let media = { revision: 0, media: null };
 let config = {
 	startSeconds: 14400, maxSeconds: 259200, maxMode: "limited", streamStartAt: 0, endMode: "open", streamEndAt: 0, sleepAdditionsEnabled: true, sleepTimerContinues: true,
   tier1Seconds: 240, tier1Enabled: true, tier2Seconds: 480, tier2Enabled: true,
@@ -59,6 +64,22 @@ createServer(async (request, response) => {
 			overall: eventStatus === "enabled" ? "enabled" : "pending",
 			activeCount: eventStatus === "enabled" ? 8 : 0, requiredCount: 8,
 		});
+		if (url.pathname === `${api}/donations/config` && request.method === "GET") return json(response, 200, donation);
+		if (url.pathname === `${api}/donations/config` && request.method === "PUT") {
+			const input = await body(request);
+			donation = { ...donation, rule: input.rule, tip_url: input.tip_url || "", revision: donation.revision + 1 };
+			return json(response, 200, donation);
+		}
+		if (url.pathname === `${api}/donations/status`) return json(response, 200, { provider: "streamelements", personal_connection_supported: true, connection_method: null, oauth_application_configured: false, account_connected: false, credits_operator_released: false });
+		if (url.pathname === `${api}/donations/preview` && request.method === "POST") {
+			const input = await body(request);
+			const seconds = donation.rule.enabled ? Math.floor(Number(input.amount_minor || 0) * donation.rule.seconds_per_base / donation.rule.base_amount_minor) : 0;
+			return json(response, 200, { seconds, revision: donation.revision, timer_changed: false, provider_event: false });
+		}
+		if (url.pathname === `${api}/media/control` && request.method === "GET") return json(response, 200, media);
+		if (url.pathname === `${api}/media/control` && request.method === "PUT") {
+			const input = await body(request); media = { revision: media.revision + 1, media: input.media || null }; return json(response, 200, media);
+		}
 		if (url.pathname === `${api}/timer/state`) return json(response, 200, { timer });
     if (url.pathname === `${api}/config` && request.method === "PUT") {
       config = await body(request);

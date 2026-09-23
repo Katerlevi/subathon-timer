@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Royal Family Subathon Timer
  * Description: Sicherer Twitch-Subathon-Timer mit persönlichen Dashboard- und OBS-Links.
- * Version: 1.3.4
+ * Version: 1.3.5-rf-planned1
  * Author: Royal Family
  * Requires at least: 6.0
  * Requires PHP: 7.4
@@ -13,12 +13,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'RFS_VERSION', '1.3.4' );
+define( 'RFS_VERSION', '1.3.5-rf-planned1' );
 define( 'RFS_PLUGIN_FILE', __FILE__ );
 define( 'RFS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 
 require_once RFS_PLUGIN_DIR . 'includes/class-rfs-crypto.php';
 require_once RFS_PLUGIN_DIR . 'includes/class-rfs-db.php';
+require_once RFS_PLUGIN_DIR . 'includes/class-rfs-planned-sleep.php';
 require_once RFS_PLUGIN_DIR . 'includes/class-rfs-core.php';
 require_once RFS_PLUGIN_DIR . 'includes/class-rfs-twitch.php';
 require_once RFS_PLUGIN_DIR . 'includes/class-rfs-rest.php';

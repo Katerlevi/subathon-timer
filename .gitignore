@@ -4,3 +4,5 @@ node_modules/
 .DS_Store
 dist/
 royal-family-subathon-*.zip
+RF_LEVI_CODEX_HANDOFF_*.zip
+handoff-*/

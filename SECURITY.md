@@ -14,10 +14,14 @@
 - Die Seite unter `/subathon/` ist nicht verlinkt und mit `noindex` gekennzeichnet. Das ersetzt keine Zugriffskontrolle; geschützt wird das Dashboard durch seinen zufälligen Token.
 - Die Social-Media-Grafik wird ausschließlich lokal im Browser erzeugt; Regelwerte werden dafür nicht an einen Bilddienst übertragen.
 - Ein festes spätestes Streamende wird zusätzlich serverseitig erzwungen. Manuelle Anpassungen, Tests und Twitch-Ereignisse können den Timer nicht über diese Uhrzeit hinaus verlängern.
+- StreamElements-Zugangsdaten werden ausschließlich serverseitig verarbeitet. Ein persönlicher JWT wird verschlüsselt gespeichert, nie an OBS ausgegeben und beim Trennen lokal gelöscht.
+- Die StreamElements-Kanalzuordnung wird serverseitig gegen den angemeldeten Twitch-Kanal geprüft. Ein öffentlicher Tipping-Link allein verbindet kein Konto und berechtigt nicht zum Empfang von Zahlungsereignissen.
+- Donation-Vorschauen erzeugen keine Zeitgutschrift. Anbieterereignisse benötigen eine eindeutige Ereignis-ID, damit Wiederholungen nicht doppelt gezählt werden.
+- Eine erfolgreiche Anbieteranmeldung ist nicht gleichbedeutend mit bestätigter Live-Zustellung. Automatische Gutschriften bleiben bis zur ausdrücklichen serverseitigen Betriebsfreigabe gesperrt.
 
 ## Umgang mit Zugangsdaten
 
-Niemals Twitch-Secrets, Datenbank-Backups, Sitzungslinks oder OBS-URLs committen oder in Screenshots veröffentlichen. Bei Verdacht auf Offenlegung die betroffenen Secrets sofort erneuern und Twitch neu verbinden.
+Niemals Twitch-Secrets, StreamElements-JWTs, Datenbank-Backups, Sitzungslinks oder OBS-URLs committen oder in Screenshots veröffentlichen. Bei Verdacht auf Offenlegung die betroffenen Secrets sofort erneuern und den jeweiligen Anbieter neu verbinden.
 
 ## Schwachstellen melden
 

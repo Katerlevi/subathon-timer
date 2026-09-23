@@ -52,7 +52,7 @@ function showAlert(data) {
 	const alert = document.querySelector("#alert");
 	const label = data.label || data.alertLabel || "Support";
 	const seconds = data.seconds ?? data.alertSeconds;
-	document.querySelector("#alertType").textContent = String(label).startsWith("Test ·") ? "TEST-ALERT" : "TWITCH-EVENT";
+	document.querySelector("#alertType").textContent = String(label).startsWith("Test ·") ? "TEST-ALERT" : "SUPPORT-EVENT";
 	document.querySelector("#alertLabel").textContent = label;
 	document.querySelector("#alertTime").textContent = formatDelta(seconds);
 	alert.classList.remove("active");
@@ -83,6 +83,7 @@ function enqueueAlerts(alerts) {
 function render() {
   const value = remaining();
   document.querySelector("#timer").textContent = formatTime(value);
+  if (globalThis.RFSleepClock) RFSleepClock.render(snapshot, "#rfSleepDuration");
   document.querySelector("#overlay").classList.toggle("ended", value <= 0);
 	document.querySelector("#overlay").classList.toggle("sleeping", Boolean(snapshot.sleeping));
 }
@@ -98,6 +99,7 @@ async function refresh() {
     if (!response.ok) throw new Error("Overlay nicht gefunden");
 		const incoming = await response.json();
 		snapshot = incoming;
+    if(globalThis.RFSleepClock)RFSleepClock.accept(incoming);
     document.querySelector("#channel").textContent = snapshot.channel ? `${snapshot.channel.toUpperCase()} · SUBATHON` : "SUBATHON";
 		document.querySelector("#event").textContent = snapshot.sleeping ? "Streamer schläft" : (snapshot.lastEvent || (snapshot.running ? "Timer läuft" : "Timer bereit"));
 		const startText = snapshot.streamStartAt ? `Start am ${formatScheduleDate(snapshot.streamStartAt)}.` : "";

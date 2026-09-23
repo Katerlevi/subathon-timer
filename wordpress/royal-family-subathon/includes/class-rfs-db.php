@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 final class RFS_DB {
-	private const VERSION = '1.3.0';
+	private const VERSION = '1.3.1-rf-planned-sleep';
 
 	public static function table( string $name ): string {
 		global $wpdb;
@@ -106,6 +106,7 @@ final class RFS_DB {
 			ends_at bigint(20) unsigned NOT NULL DEFAULT 0,
 			sleeping tinyint(1) NOT NULL DEFAULT 0,
 			sleep_started_at bigint(20) unsigned NOT NULL DEFAULT 0,
+			sleep_duration_seconds int(11) unsigned NOT NULL DEFAULT 0,
 			sleep_resume_timer tinyint(1) NOT NULL DEFAULT 0,
 			last_event varchar(255) DEFAULT NULL,
 			alert_id bigint(20) unsigned NOT NULL DEFAULT 0,

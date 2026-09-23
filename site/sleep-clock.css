@@ -1,0 +1,17 @@
+/* Planned sleep layout: two independent clocks, original RF style retained. */
+.rf-sleep-duration {display:block;margin:10px 0;color:inherit;font:750 24px/1.25 ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums;}
+.rf-sleep-duration[hidden],.rf-main-timer-label[hidden] {display:none!important;}
+.rf-sleep-duration[data-state="unknown"] {font:650 18px/1.35 ui-sans-serif,system-ui,sans-serif;}
+.rf-sleep-duration[data-stale="true"]::after {content:' · Synchronisierung ausstehend';display:block;margin-top:6px;font:500 13px/1.3 ui-sans-serif,system-ui,sans-serif;}
+.rf-sleep-plan {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;border:1px solid #344251;border-radius:12px;padding:14px;min-width:0;}
+.rf-sleep-plan legend {font-weight:700;padding:0 5px;}
+.rf-sleep-plan label {display:flex;flex-direction:column;gap:6px;min-width:0;}
+.rf-sleep-plan input {width:100%;min-width:0;padding:10px;color:inherit;background:#0c121b;border:1px solid #344251;border-radius:8px;}
+.rf-sleep-plan p {grid-column:1/-1;margin:0;font-size:13px;line-height:1.4;}
+.sleep-options .rf-sleep-plan {grid-column:1/-1;}
+.overlay.sleeping {grid-template-columns:minmax(220px,1fr) auto minmax(280px,1fr);row-gap:10px;padding:18px 30px;overflow:hidden;}
+.overlay>#rfSleepDuration {grid-column:1/-1;grid-row:1;text-align:center;font-size:clamp(24px,2.5vw,42px);margin:0 0 4px;}
+.overlay .rf-main-timer-label {display:block;font-size:11px;line-height:1.5;letter-spacing:.06em;text-transform:uppercase;color:#99a6ba;margin-bottom:5px;}
+.overlay time {min-width:0;}
+.overlay.sleeping .sleep-rule {font-size:clamp(16px,1.08vw,20px);line-height:1.4;}
+@media(max-width:700px){.overlay.sleeping{grid-template-columns:1fr;gap:10px;padding:16px;}.overlay>#rfSleepDuration{font-size:26px;}.rf-sleep-duration{overflow-wrap:anywhere;}.rf-sleep-plan{gap:7px;padding:10px;}}

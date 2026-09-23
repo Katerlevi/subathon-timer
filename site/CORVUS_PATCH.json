@@ -1,0 +1,106 @@
+{
+  "schema_version": "1.0",
+  "patch_id": "RF_SUBATHON_TEST_ALERT_LABELS_20260921_001",
+  "patch_kind": "frontend_bugfix",
+  "project": "Royal Family Subathon Timer",
+  "base_author": "Levi",
+  "base_version": "1.3.4",
+  "frontend_asset_revision": "1.3.4-rf-testalerts-20260921-1",
+  "backend_version_unchanged": "1.3.4",
+  "purpose": "Refresh Test-Alert labels only after server-confirmed settings save; retain rule-card/button identity and disabled state.",
+  "files": [
+    {
+      "path": "site/app.js",
+      "live_path": "/subathon/app.js",
+      "before_sha256": "6ff205ca1b98bf84ed387c57a5123e9a41ba1ea68949d68872102376298efaeb",
+      "after_sha256": "240c3ae00c7adde3871f4e8b56695c8734777684f78d413ea136be0d3c9e77c9"
+    },
+    {
+      "path": "site/index.html",
+      "live_path": "/subathon/index.html",
+      "before_sha256": "ba8aa4b7c3edd27a5402480fd1a758d21bd3c5173b6fca1faa8e54ad4925a266",
+      "after_sha256": "c690d649b4546208d0eb633af5ae2b7ee72aaa00a33f35a1ca6cd3f5b3e36d8b"
+    }
+  ],
+  "added_file": "/subathon/CORVUS_PATCH.json",
+  "source_of_truth": "Installed WordPress plugin and live /subathon/ folder, not the older public Cloudflare GitHub tree.",
+  "backup": {
+    "id": "RF_SUBATHON_LEVI_LIVE_1_3_4_BEFORE_20260921",
+    "scope": [
+      "/subathon/",
+      "/wp-content/plugins/royal-family-subathon/"
+    ],
+    "database_included": false,
+    "database_change_required": false,
+    "archives": [
+      {
+        "name": "subathon.zip",
+        "sha256": "e4c5929209416f8d721ace1c2afdc2f4ddf47f8c9077e98a34bcf5d23f41e787",
+        "bytes": 112328
+      },
+      {
+        "name": "royal-family-subathon.zip",
+        "sha256": "7d1a3e803e258e2676b8f639a70231c4d383fbb811c9a5d66e7890a0b69d28be",
+        "bytes": 20447
+      }
+    ]
+  },
+  "apply_preconditions": [
+    "Both original folder archives must exist and pass SHA256 and ZIP CRC checks.",
+    "Live app.js and index.html must match before_sha256; otherwise STOP rather than overwrite newer Levi work.",
+    "Patch exactly one saveSettings function; do not replace with the older GitHub implementation."
+  ],
+  "apply_order": [
+    "site/app.js",
+    "site/index.html",
+    "CORVUS_PATCH.json"
+  ],
+  "rollback": {
+    "archive": "subathon.zip",
+    "restore_entries": [
+      "subathon/app.js",
+      "subathon/index.html"
+    ],
+    "verification": "Restored bytes must match before_sha256 for both files; preserve this note and mark rollback externally."
+  },
+  "tests": {
+    "isolated_javascript": {
+      "passed": 11,
+      "failed": 0,
+      "original_bug_reproducer": 1,
+      "patched_behavior": 10,
+      "location": "ChatGPT sandbox"
+    },
+    "patch_preparation": {
+      "passed": 5,
+      "failed": 0,
+      "location": "ChatGPT sandbox"
+    },
+    "syntax_check": {
+      "command": "node --check app.js",
+      "exit_code": 0,
+      "location": "CORVUS-TALOS"
+    }
+  },
+  "manual_acceptance": [
+    "Change T3 from 15 to 20 minutes and save: Test-Alert label becomes +20:00 after a successful response.",
+    "A failed save must retain the last confirmed label.",
+    "Click Test-Alert: existing save-then-test flow and busy/disabled state remain unchanged."
+  ],
+  "not_changed": [
+    "WordPress plugin/PHP",
+    "database",
+    "Twitch OAuth/EventSub",
+    "hosting/firewall",
+    "timer arithmetic",
+    "donations",
+    "sleep display",
+    "clip overlay"
+  ],
+  "limitations": [
+    "No claim to fix Twitch event delivery or actual time-credit arithmetic.",
+    "No live streamer timer or live test-event required for this display-only patch."
+  ],
+  "deployment_receipt": "Stored separately; this file describes the patch and is not alone evidence of deployment.",
+  "future_codex_instruction": "Keep Levi original backups immutable. Compare SHA256 before merge. Carry only this minimal frontend delta into the current project. Do not promote the older public GitHub tree to production."
+}

@@ -1,6 +1,6 @@
 # Subathon Timer
 
-Ein sicherer, quelloffener Subathon-Timer für Twitch. Dashboard und OBS-Ansicht werden als nicht gelistete Anwendung unter `royalfamily.gg/subathon/` ausgeliefert. Ein eigenes WordPress-Plugin auf RoyalFamily.gg verarbeitet Twitch OAuth, EventSub-Webhooks und den persistenten Timerzustand.
+Ein sicherer, quelloffener Subathon-Timer für Twitch. Dashboard und OBS-Ansicht werden als nicht gelistete Anwendung unter `royalfamily.gg/subathon/` ausgeliefert. Zwei voneinander getrennte WordPress-Plugins verarbeiten den Kern-Timer sowie optionale Streamer-Werkzeuge.
 
 ## Enthalten
 
@@ -22,17 +22,21 @@ Ein sicherer, quelloffener Subathon-Timer für Twitch. Dashboard und OBS-Ansicht
 - Eigene und automatische Kanalpunkt-Belohnungen mit getrenntem EventSub-Abo; Status aller acht Twitch-Ereignisse und erneute Anmeldung im Dashboard
 - Verschlüsselte Twitch-Tokens in der WordPress-Datenbank
 - Responsive deutsche Bedienoberfläche
+- Optionaler Donation-Tracker über StreamElements mit serverseitig gespeicherter EUR-Zeitregel und reiner Testberechnung
+- Donation-Einstellungen, die nur bei eingeschaltetem Donations-Regler sichtbar sind
+- Optionale, getrennte Clip-Browserquelle
 
 ## Architektur
 
-Die öffentliche Weboberfläche darf keine Twitch-Geheimnisse enthalten. Daher besteht die Anwendung aus zwei Teilen:
+Die öffentliche Weboberfläche darf keine Twitch- oder Anbieter-Geheimnisse enthalten. Daher besteht die Anwendung aus drei Teilen:
 
 1. `site/` ist die statische Oberfläche für `/subathon/` auf RoyalFamily.gg.
-2. `wordpress/royal-family-subathon/` ist das isolierte Backend-Plugin für RoyalFamily.gg. Es verändert weder Theme noch Navigation.
+2. `wordpress/royal-family-subathon/` ist das isolierte Kern-Plugin für Twitch, Timer, Regeln und OBS.
+3. `wordpress/royal-family-streamertools/` ergänzt optionale Donations, geplanten Schlaf und Mediensteuerung, ohne das Theme oder die Navigation zu verändern.
 
 Der Ordner `worker/` enthält nur noch den früheren Cloudflare-Prototyp und wird für die RoyalFamily-Installation nicht benötigt.
 
-Die vollständige Einrichtung steht in [SETUP.md](SETUP.md). Sicherheitsdetails und Meldeweg stehen in [SECURITY.md](SECURITY.md).
+Die vollständige Einrichtung steht in [SETUP.md](SETUP.md). Der aktuell übernommene Stand und die noch ausstehenden echten Anbieterprüfungen stehen in [PROJECT_STATUS.md](PROJECT_STATUS.md). Sicherheitsdetails und Meldeweg stehen in [SECURITY.md](SECURITY.md).
 
 ## Lokal prüfen
 
